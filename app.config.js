@@ -17,6 +17,18 @@ module.exports = ({ config }) => {
   // Android: release build chặn HTTP thường trừ khi bật usesCleartextTraffic.
   plugins.push(['expo-build-properties', { android: { usesCleartextTraffic: !httpsOnly } }]);
 
+  // Icon A là biểu tượng mặc định; B và C là hai lựa chọn trong Cài đặt.
+  plugins.push(['expo-awesome-app-icon', { icons: {
+    envelope: {
+      ios: { light: './assets/icons/logo-b.png' },
+      android: { image: './assets/icons/logo-b.png', foregroundImage: './assets/icons/logo-b-foreground.png', backgroundColor: '#D6F07A' },
+    },
+    star: {
+      ios: { light: './assets/icons/logo-c.png' },
+      android: { image: './assets/icons/logo-c.png', foregroundImage: './assets/icons/logo-c-foreground.png', backgroundColor: '#F4A3DE' },
+    },
+  } }]);
+
   // Google Sign-In gốc. Android không cần plugin (đăng ký SHA-1 trong Google Cloud Console là đủ).
   // iOS bắt buộc có URL scheme; chưa đặt biến môi trường thì bỏ qua plugin để build vẫn chạy
   // (khi đó nút "Tiếp tục với Google" trên iOS sẽ báo lỗi cấu hình).

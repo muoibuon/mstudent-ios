@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Alert, Platform, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AppIconPicker } from '@/components/AppIconPicker';
 import { Button, Card, Display, Muted, T } from '@/components/ui';
 import { BRAND, FONT, SCREEN_PAD, TAB_BAR_SPACE, usePalette } from '@/constants/theme';
 import { api, authApi } from '@/lib/api';
@@ -102,6 +103,7 @@ export default function SettingsScreen() {
       </View>
 
       <View style={{ paddingHorizontal: SCREEN_PAD, gap: 14, marginTop: 16 }}>
+        <AppIconPicker />
         <Card tone={BRAND.mint}>
           <Display size={22} color={BRAND.mintInk}>
             AI
