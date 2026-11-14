@@ -1,6 +1,10 @@
 // Google Sign-In gốc (native). Thư viện chỉ có trong development/production build —
 // trong Expo Go hoặc bản web thì `available` = false và app dùng đăng nhập email/mật khẩu.
 
+import Constants from 'expo-constants';
+import { Platform } from 'react-native';
+
+import { googleIosSetupError } from './googleIosConfig';
 import type { PublicConfig } from './types';
 
 const GMAIL_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
@@ -33,6 +37,10 @@ async function run(cfg: PublicConfig['google'], scopes: string[]): Promise<Googl
   const offline = scopes.length > 0;
   if (!lib) throw new Error('Bản app này chưa có Google Sign-In (cần development build)');
   if (!cfg.enabled) throw new Error('Server chưa cấu hình Google (GOOGLE_WEB_CLIENT_ID)');
+  if (Platform.OS === 'ios') {
+    const setupError = googleIosSetupError(cfg.ios_client_id, Constants.expoConfig?.extra?.googleIosUrlScheme);
+    if (setupError) throw new Error(setupError);
+  }
   const { GoogleSignin } = lib;
   GoogleSignin.configure({
     webClientId: cfg.web_client_id, // server dùng client này để kiểm ID token và đổi mã uỷ quyền

@@ -1,6 +1,6 @@
 // Bổ sung cấu hình phụ thuộc môi trường vào app.json.
 //
-//   GOOGLE_IOS_URL_SCHEME   = com.googleusercontent.apps.<IOS_CLIENT_ID đảo ngược>  → bật Google Sign-In trên iOS
+//   GOOGLE_IOS_URL_SCHEME   = ghi đè URL scheme Google iOS khi đổi OAuth client (mặc định đã cấu hình)
 //   MSTUDENT_HTTPS_ONLY=1   → cấm HTTP thường (dùng khi backend đã có HTTPS; khuyến nghị cho bản phát hành)
 //   MSTUDENT_IOS_FREE_SIGNING=1 → build iOS ký bằng Apple ID miễn phí (Personal Team): Personal Team không có
 //                             App Groups nên tắt share extension iOS. Vẫn dán thông báo được; Android không đổi.
@@ -18,14 +18,20 @@ module.exports = ({ config }) => {
   plugins.push(['expo-build-properties', { android: { usesCleartextTraffic: !httpsOnly } }]);
 
   // Google Sign-In gốc. Android không cần plugin (đăng ký SHA-1 trong Google Cloud Console là đủ).
-  // iOS bắt buộc có URL scheme; chưa đặt biến môi trường thì bỏ qua plugin để build vẫn chạy
-  // (khi đó nút "Tiếp tục với Google" trên iOS sẽ báo lỗi cấu hình).
-  const iosUrlScheme = process.env.GOOGLE_IOS_URL_SCHEME;
-  if (iosUrlScheme) plugins.push(['@react-native-google-signin/google-signin', { iosUrlScheme }]);
+  // URL scheme là định danh OAuth công khai, không phải client secret. Luôn nhúng vào bản iOS
+  // để GIDSignIn không ném NSException và kết thúc app khi người dùng bấm kết nối.
+  const iosUrlScheme =
+    process.env.GOOGLE_IOS_URL_SCHEME?.trim() ||
+    'com.googleusercontent.apps.335394072846-ldnhn5760emts6eur2689uqfmtgkaibb';
+  if (!/^com\.googleusercontent\.apps\.[A-Za-z0-9_-]+$/.test(iosUrlScheme)) {
+    throw new Error('GOOGLE_IOS_URL_SCHEME không đúng định dạng Google iOS URL scheme');
+  }
+  plugins.push(['@react-native-google-signin/google-signin', { iosUrlScheme }]);
 
   return {
     ...config,
     plugins,
+    extra: { ...config.extra, googleIosUrlScheme: iosUrlScheme },
     ios: {
       ...config.ios,
       infoPlist: {
