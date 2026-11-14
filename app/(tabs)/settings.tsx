@@ -119,7 +119,6 @@ function SettingsContent() {
               <Stat value={stats.tasks_created} label="việc tìm được" tone={BRAND.periwinkle} />
               <Stat value={stats.changes_caught} label="lần đổi hạn bắt kịp" tone={BRAND.mint} />
               <Stat value={stats.tasks_done} label="việc đã xong" />
-              <Stat value={stats.ai_runs} label="lượt AI chạy" />
             </View>
           </View>
         )}
