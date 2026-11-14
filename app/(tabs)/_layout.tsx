@@ -3,7 +3,7 @@
 
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { Tabs } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Animated, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -19,53 +19,39 @@ const TABS: Record<string, { label: string; icon: IconName }> = {
   settings: { label: 'Cài đặt', icon: 'settings' },
 };
 
-function TabButton({ tab, focused, onSelect }: { tab: { label: string; icon: IconName }; focused: boolean; onSelect: () => void }) {
-  const c = usePalette();
-  const reducedMotion = useReducedMotion();
-  const [scale] = useState(() => new Animated.Value(1));
-
-  useEffect(() => {
-    if (!focused || reducedMotion) {
-      scale.stopAnimation();
-      scale.setValue(1);
-      return;
-    }
-    scale.setValue(0.88);
-    const animation = Animated.spring(scale, { toValue: 1, friction: 7, tension: 150, useNativeDriver: true });
-    animation.start();
-    return () => animation.stop();
-  }, [focused, reducedMotion, scale]);
-
-  return (
-    <Animated.View style={{ width: 52, height: 52, transform: [{ scale }] }}>
-      <MotionPressable
-        pressedScale={0.9}
-        accessibilityRole="tab"
-        accessibilityLabel={tab.label}
-        accessibilityState={{ selected: focused }}
-        onPress={() => {
-          if (!focused) onSelect();
-        }}
-        style={{
-          width: 52,
-          height: 52,
-          borderRadius: 26,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: focused ? c.active : 'transparent',
-        }}>
-        <Icon name={tab.icon} color={focused ? c.onActive : c.muted} />
-      </MotionPressable>
-    </Animated.View>
-  );
-}
-
 function FloatingTabBar({ state, navigateToTab }: BottomTabBarProps) {
   const c = usePalette();
   const insets = useSafeAreaInsets();
+  const reducedMotion = useReducedMotion();
+  const [width, setWidth] = useState(0);
+  const [indicatorX] = useState(() => new Animated.Value(0));
+  const positioned = useRef(false);
+  const slotWidth = width / state.routes.length;
+
+  useEffect(() => {
+    if (!slotWidth) return;
+    const target = state.index * slotWidth;
+    if (!positioned.current || reducedMotion) {
+      indicatorX.stopAnimation();
+      indicatorX.setValue(target);
+      positioned.current = true;
+      return;
+    }
+    const animation = Animated.spring(indicatorX, {
+      toValue: target,
+      damping: 18,
+      stiffness: 220,
+      mass: 1,
+      useNativeDriver: true,
+    });
+    animation.start();
+    return () => animation.stop();
+  }, [state.index, slotWidth, reducedMotion, indicatorX]);
+
   return (
     <View
       accessibilityRole="tablist"
+      onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
       style={{
         position: 'absolute',
         left: 24,
@@ -75,7 +61,6 @@ function FloatingTabBar({ state, navigateToTab }: BottomTabBarProps) {
         borderRadius: 34,
         backgroundColor: c.surface,
         flexDirection: 'row',
-        justifyContent: 'space-around',
         alignItems: 'center',
         shadowColor: '#141414',
         shadowOpacity: c.bg === '#FFFFFF' ? 0.12 : 0.5,
@@ -83,10 +68,48 @@ function FloatingTabBar({ state, navigateToTab }: BottomTabBarProps) {
         shadowOffset: { width: 0, height: 8 },
         elevation: 8,
       }}>
+      {slotWidth > 0 && (
+        <Animated.View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            top: 8,
+            left: (slotWidth - 52) / 2,
+            width: 52,
+            height: 52,
+            borderRadius: 26,
+            backgroundColor: c.active,
+            transform: [{ translateX: indicatorX }],
+          }}
+        />
+      )}
       {state.routes.map((route, i) => {
         const tab = TABS[route.name];
         if (!tab) return null;
-        return <TabButton key={route.key} tab={tab} focused={state.index === i} onSelect={() => navigateToTab(route.key)} />;
+        const activeOpacity = slotWidth
+          ? indicatorX.interpolate({
+              inputRange: [(i - 1) * slotWidth, i * slotWidth, (i + 1) * slotWidth],
+              outputRange: [0, 1, 0],
+              extrapolate: 'clamp',
+            })
+          : state.index === i ? 1 : 0;
+        return (
+          <View key={route.key} style={{ flex: 1, alignItems: 'center' }}>
+            <MotionPressable
+              accessibilityRole="tab"
+              accessibilityLabel={tab.label}
+              accessibilityState={{ selected: state.index === i }}
+              onPress={() => {
+                if (state.index !== i) navigateToTab(route.key);
+              }}
+              style={{ width: 52, height: 52, alignItems: 'center', justifyContent: 'center' }}>
+              <Icon name={tab.icon} color={c.muted} />
+              <Animated.View pointerEvents="none" style={{ position: 'absolute', opacity: activeOpacity }}>
+                <Icon name={tab.icon} color={c.onActive} />
+              </Animated.View>
+            </MotionPressable>
+          </View>
+        );
       })}
     </View>
   );

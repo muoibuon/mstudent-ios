@@ -55,6 +55,9 @@ export default function ChatScreen() {
   const today = useMemo(() => tasks.filter((t) => bucketOf(t.due_at, now) === 'Hôm nay'), [tasks, now]);
   const urgent = today.filter((t) => t.priority === 'high').length;
   const soonest = [...today].sort((a, b) => (a.due_at ?? '').localeCompare(b.due_at ?? ''))[0];
+  const overdue = tasks.some((t) => bucketOf(t.due_at, now) === 'Quá hạn');
+  const nearUrgent = today.some((t) => t.priority === 'high' && t.due_at && new Date(t.due_at).getTime() - now.getTime() < 2 * 60 * 60 * 1000);
+  const mood = error || health?.mode === 'offline' ? 'offline' : overdue || nearUrgent ? 'worried' : 'happy';
 
   async function send(text = input) {
     const message = text.trim();
@@ -96,7 +99,6 @@ export default function ChatScreen() {
 
       <MotionPressable
         onPress={() => router.navigate('/tasks')}
-        pressedScale={0.985}
         accessibilityRole="button"
         accessibilityLabel={`${today.length} việc hôm nay. Mở danh sách việc`}
         style={[styles.todayCard, { marginHorizontal: SCREEN_PAD }]}>
@@ -109,7 +111,7 @@ export default function ChatScreen() {
           </T>
         </View>
         <View style={{ marginRight: -6, marginBottom: -30 }}>
-          <Meme size={96} />
+          <Meme size={96} mood={mood} />
         </View>
       </MotionPressable>
 
@@ -205,10 +207,10 @@ function Bubble({ msg }: { msg: Msg }) {
 function Typing() {
   const c = usePalette();
   const reducedMotion = useReducedMotion();
-  const [dots] = useState(() => [0, 1, 2].map(() => new Animated.Value(0.35)));
+  const [dots] = useState(() => [0, 1, 2].map(() => new Animated.Value(0)));
   useEffect(() => {
     if (reducedMotion) {
-      dots.forEach((v) => v.setValue(0.65));
+      dots.forEach((v) => v.setValue(0.5));
       return;
     }
     const anims = dots.map((v, i) =>
@@ -216,8 +218,8 @@ function Typing() {
         Animated.sequence([
           Animated.delay(i * 150),
           Animated.timing(v, { toValue: 1, duration: 300, useNativeDriver: true }),
-          Animated.timing(v, { toValue: 0.35, duration: 300, useNativeDriver: true }),
-          Animated.delay(450 - i * 150),
+          Animated.timing(v, { toValue: 0, duration: 300, useNativeDriver: true }),
+          Animated.delay(600 - i * 150),
         ]),
       ),
     );
@@ -226,10 +228,20 @@ function Typing() {
   }, [dots, reducedMotion]);
   return (
     <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-end' }} accessibilityLabel="Trợ lý đang trả lời" accessibilityRole="progressbar">
-      <MemeAvatar />
+      <MemeAvatar thinking />
       <View style={[styles.bubble, styles.theirs, { backgroundColor: c.soft, flexDirection: 'row', gap: 6, paddingVertical: 16 }]}>
         {dots.map((v, i) => (
-          <Animated.View key={i} style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: c.text, opacity: v }} />
+          <Animated.View
+            key={i}
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: 4,
+              backgroundColor: c.text,
+              opacity: v.interpolate({ inputRange: [0, 1], outputRange: [0.35, 1] }),
+              transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [0, -4] }) }],
+            }}
+          />
         ))}
       </View>
     </View>

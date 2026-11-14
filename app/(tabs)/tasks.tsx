@@ -24,8 +24,16 @@ export default function TasksScreen() {
   const insets = useSafeAreaInsets();
   const { tasks, invites, profile, user, respond, now, loading, error, refresh, markDone, health } = useStore();
   const [answering, setAnswering] = useState<number | null>(null);
+  const [celebrating, setCelebrating] = useState(false);
   const [declined, setDeclined] = useState<Task[] | null>(null); // null = chưa mở mục "Đã bỏ qua"
   const pending = useMemo(() => sortInvites(invites, now), [invites, now]);
+  const todayCount = tasks.filter((t) => bucketOf(t.due_at, now) === 'Hôm nay').length;
+
+  useEffect(() => {
+    if (!celebrating) return;
+    const timer = setTimeout(() => setCelebrating(false), 2200);
+    return () => clearTimeout(timer);
+  }, [celebrating]);
   // Dữ liệu điền sẵn form: lấy từ hồ sơ + tài khoản trên máy, chỉ dùng để dựng link mở form.
   const prefill = useMemo<PrefillValues>(
     () => ({
@@ -115,6 +123,12 @@ export default function TasksScreen() {
         stickySectionHeadersEnabled={false}
         ListHeaderComponent={
           <View style={{ gap: 12, marginBottom: 4 }}>
+            {celebrating && (
+              <View style={{ borderRadius: 24, backgroundColor: BRAND.mint, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <Meme size={72} mood="celebrating" />
+                <T v="title" color={BRAND.mintInk}>Hôm nay xong rồi!</T>
+              </View>
+            )}
             {error && <ErrorBanner message={error} onRetry={refresh} />}
             {pending.length > 0 && (
               <View style={{ gap: 10 }}>
@@ -159,7 +173,16 @@ export default function TasksScreen() {
           const prev = index > 0 ? section.data[index - 1] : null;
           return (
             <View>
-              <TaskCard task={item} now={now} overlap={index > 0 && prev?.rsvp !== 'going'} onDone={() => markDone(item.id)} />
+              <TaskCard
+                task={item}
+                now={now}
+                overlap={index > 0 && prev?.rsvp !== 'going'}
+                entranceDelay={Math.min(index, 3) * 80}
+                onDone={() => {
+                  if (todayCount === 1 && bucketOf(item.due_at, now) === 'Hôm nay') setCelebrating(true);
+                  return markDone(item.id);
+                }}
+              />
               {item.rsvp === 'going' && <EventActions task={item} values={prefill} />}
             </View>
           );
@@ -187,7 +210,7 @@ export default function TasksScreen() {
         ListEmptyComponent={
           !loading && !error && pending.length === 0 ? (
             <View style={{ borderRadius: 28, backgroundColor: c.soft, padding: 24, alignItems: 'center', gap: 8, marginTop: 12 }}>
-              <Meme size={110} wave />
+              <Meme size={110} mood={celebrating ? 'celebrating' : 'sleepy'} />
               <T v="title">Chưa có việc nào</T>
               <Muted style={{ textAlign: 'center' }}>
                 Chia sẻ một thông báo từ Zalo sang MStudent, bấm “Thêm”, hoặc kết nối nguồn tự động trong Cài đặt.

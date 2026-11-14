@@ -6,7 +6,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/Icon';
-import { CategoryCharacter } from '@/components/Mascot';
+import { Meme } from '@/components/Mascot';
 import { MotionPressable } from '@/components/MotionPressable';
 import { Button, Muted, T, TaskCard } from '@/components/ui';
 import { BRAND, FONT, SCREEN_PAD, TAB_BAR_SPACE, usePalette } from '@/constants/theme';
@@ -93,13 +93,13 @@ export default function CalendarScreen() {
         {dayTasks.length ? (
           <>
             {dayTasks.map((t, i) => (
-              <TaskCard key={t.id} task={t} now={now} overlap={i > 0} onDone={() => markDone(t.id)} onLongPress={() => setMoving(t)} />
+              <TaskCard key={t.id} task={t} now={now} overlap={i > 0} entranceDelay={Math.min(i, 3) * 80} onDone={() => markDone(t.id)} onLongPress={() => setMoving(t)} />
             ))}
             <Muted style={{ marginTop: 12 }}>Nhấn giữ một việc để dời sang ngày khác.</Muted>
           </>
         ) : (
           <View style={{ borderRadius: 28, backgroundColor: c.soft, paddingVertical: 28, paddingHorizontal: 20, alignItems: 'center', gap: 8 }}>
-            <CategoryCharacter category="event" size={80} />
+            <Meme size={80} mood="sleepy" />
             <T style={{ fontFamily: FONT.semibold }}>Ngày này rảnh rồi!</T>
             <Muted>Không có việc nào trong ngày này.</Muted>
           </View>
