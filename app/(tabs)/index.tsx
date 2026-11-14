@@ -8,11 +8,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/Icon';
 import { Meme, MemeAvatar } from '@/components/Mascot';
+import { MotionPressable } from '@/components/MotionPressable';
 import { Chip, Display, ErrorBanner, ModePill, T, timeLabel } from '@/components/ui';
 import { BRAND, FONT, SCREEN_PAD, TAB_BAR_SPACE, usePalette } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { bucketOf } from '@/lib/dates';
 import { useStore } from '@/lib/store';
+import { useReducedMotion } from '@/lib/useReducedMotion';
 import type { ChatTurn, ToolCall } from '@/lib/types';
 
 interface Msg {
@@ -33,6 +35,7 @@ function greeting(now: Date): string {
 
 export default function ChatScreen() {
   const c = usePalette();
+  const reducedMotion = useReducedMotion();
   const insets = useSafeAreaInsets();
   const { refresh, error, health, user, tasks, now } = useStore();
   const name = (user?.name || user?.email?.split('@')[0] || '').split(' ').slice(-1)[0];
@@ -91,8 +94,9 @@ export default function ChatScreen() {
         </T>
       </View>
 
-      <Pressable
+      <MotionPressable
         onPress={() => router.navigate('/tasks')}
+        pressedScale={0.985}
         accessibilityRole="button"
         accessibilityLabel={`${today.length} việc hôm nay. Mở danh sách việc`}
         style={[styles.todayCard, { marginHorizontal: SCREEN_PAD }]}>
@@ -107,7 +111,7 @@ export default function ChatScreen() {
         <View style={{ marginRight: -6, marginBottom: -30 }}>
           <Meme size={96} />
         </View>
-      </Pressable>
+      </MotionPressable>
 
       {error && (
         <View style={{ paddingHorizontal: SCREEN_PAD, paddingTop: 10 }}>
@@ -120,7 +124,7 @@ export default function ChatScreen() {
         data={data}
         keyExtractor={(m) => m.id}
         contentContainerStyle={{ paddingHorizontal: SCREEN_PAD, paddingTop: 16, gap: 10 }}
-        onContentSizeChange={() => list.current?.scrollToEnd({ animated: true })}
+        onContentSizeChange={() => list.current?.scrollToEnd({ animated: !reducedMotion })}
         renderItem={({ item }) => (item.id === 'typing' ? <Typing /> : <Bubble msg={item} />)}
       />
 
@@ -144,14 +148,14 @@ export default function ChatScreen() {
           style={[styles.input, { color: c.text, backgroundColor: c.soft, fontFamily: FONT.regular }]}
           accessibilityLabel="Tin nhắn cho trợ lý"
         />
-        <Pressable
+        <MotionPressable
           onPress={() => send()}
           disabled={busy || !input.trim()}
           accessibilityRole="button"
           accessibilityLabel="Gửi"
           style={[styles.send, { backgroundColor: c.active, opacity: busy || !input.trim() ? 0.5 : 1 }]}>
           <Icon name="send" color={c.onActive} size={22} stroke={2.4} />
-        </Pressable>
+        </MotionPressable>
       </View>
     </KeyboardAvoidingView>
   );
@@ -200,8 +204,13 @@ function Bubble({ msg }: { msg: Msg }) {
 /** Ba chấm nảy "đang trả lời" (tắt chuyển động khi máy bật Giảm chuyển động). */
 function Typing() {
   const c = usePalette();
+  const reducedMotion = useReducedMotion();
   const [dots] = useState(() => [0, 1, 2].map(() => new Animated.Value(0.35)));
   useEffect(() => {
+    if (reducedMotion) {
+      dots.forEach((v) => v.setValue(0.65));
+      return;
+    }
     const anims = dots.map((v, i) =>
       Animated.loop(
         Animated.sequence([
@@ -214,7 +223,7 @@ function Typing() {
     );
     anims.forEach((a) => a.start());
     return () => anims.forEach((a) => a.stop());
-  }, [dots]);
+  }, [dots, reducedMotion]);
   return (
     <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-end' }} accessibilityLabel="Trợ lý đang trả lời" accessibilityRole="progressbar">
       <MemeAvatar />

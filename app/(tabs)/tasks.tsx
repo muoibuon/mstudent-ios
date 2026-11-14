@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/Icon';
 import { EventActions, InviteCard } from '@/components/InviteCard';
 import { Meme } from '@/components/Mascot';
+import { MotionPressable } from '@/components/MotionPressable';
 import { Display, ErrorBanner, Muted, T, TaskCard } from '@/components/ui';
 import { BRAND, FONT, SCREEN_PAD, TAB_BAR_SPACE, usePalette } from '@/constants/theme';
 import { api } from '@/lib/api';
@@ -87,7 +88,7 @@ export default function TasksScreen() {
         <T v="h1" accessibilityRole="header">
           Việc của bạn
         </T>
-        <Pressable
+        <MotionPressable
           onPress={() => router.push('/share')}
           accessibilityRole="button"
           accessibilityLabel="Thêm thông báo"
@@ -96,7 +97,7 @@ export default function TasksScreen() {
           <T style={{ fontFamily: FONT.semibold, fontSize: 14 }} color={c.onActive}>
             Thêm
           </T>
-        </Pressable>
+        </MotionPressable>
       </View>
       <SectionList
         sections={sections}

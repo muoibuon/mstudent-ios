@@ -7,10 +7,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/Icon';
 import { CategoryCharacter } from '@/components/Mascot';
+import { MotionPressable } from '@/components/MotionPressable';
 import { Button, Muted, T, TaskCard } from '@/components/ui';
 import { BRAND, FONT, SCREEN_PAD, TAB_BAR_SPACE, usePalette } from '@/constants/theme';
 import { addDays, dayKey, fmtDayLong, fmtDayShort, fmtTime, moveToDay, startOfDay } from '@/lib/dates';
 import { useStore } from '@/lib/store';
+import { useReducedMotion } from '@/lib/useReducedMotion';
 import type { Task } from '@/lib/types';
 
 const DOW = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
@@ -62,7 +64,7 @@ export default function CalendarScreen() {
           const bg = sel ? c.active : n ? BRAND.lime : c.soft;
           const fg = sel ? (c.active === BRAND.ink ? '#FFFFFF' : BRAND.ink) : n ? BRAND.ink : c.muted;
           return (
-            <Pressable
+            <MotionPressable
               key={k}
               onPress={() => setSelected(k)}
               accessibilityRole="button"
@@ -75,7 +77,7 @@ export default function CalendarScreen() {
               <T style={{ fontSize: 12, fontFamily: k === todayKey ? FONT.semibold : FONT.regular }} color={fg}>
                 {DOW[new Date(d.getTime() + 7 * 3600e3).getUTCDay()]}
               </T>
-            </Pressable>
+            </MotionPressable>
           );
         })}
       </View>
@@ -124,9 +126,9 @@ export default function CalendarScreen() {
 function RoundButton({ label, icon, onPress }: { label: string; icon: 'left' | 'right'; onPress: () => void }) {
   const c = usePalette();
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} style={[styles.round, { backgroundColor: c.soft }]}>
+    <MotionPressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} style={[styles.round, { backgroundColor: c.soft }]}>
       <Icon name={icon} color={c.text} size={20} stroke={2.4} />
-    </Pressable>
+    </MotionPressable>
   );
 }
 
@@ -142,9 +144,10 @@ function MoveSheet({
   onPick: (dayKey: string) => void;
 }) {
   const c = usePalette();
+  const reducedMotion = useReducedMotion();
   const options = [...Array(14)].map((_, i) => addDays(from, i));
   return (
-    <Modal visible={!!task} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={!!task} transparent animationType={reducedMotion ? 'none' : 'slide'} onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Đóng" />
       <View style={[styles.sheet, { backgroundColor: c.surface }]}>
         <T v="title" numberOfLines={2}>

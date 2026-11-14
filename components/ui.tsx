@@ -4,7 +4,6 @@
 import type { ReactNode } from 'react';
 import {
   ActivityIndicator,
-  Pressable,
   StyleSheet,
   Text,
   View,
@@ -16,6 +15,7 @@ import {
 
 import { CategoryCharacter } from '@/components/Mascot';
 import { Icon } from '@/components/Icon';
+import { MotionPressable } from '@/components/MotionPressable';
 import { BRAND, FONT, PRIORITY_BG, PRIORITY_LABEL, RADIUS, TYPE, usePalette } from '@/constants/theme';
 import { relativeDay } from '@/lib/dates';
 import { taskSourcesLabel } from '@/lib/sources';
@@ -91,17 +91,17 @@ export function Button({
   };
   const l = look[variant];
   return (
-    <Pressable
+    <MotionPressable
       accessibilityRole="button"
       accessibilityLabel={label}
       onPress={onPress}
       disabled={disabled || busy}
-      style={({ pressed }) => [
+      style={[
         s.btn,
         small && s.btnSmall,
         { backgroundColor: l.bg },
         l.border ? { borderWidth: 2, borderColor: l.border } : null,
-        (pressed || disabled) && { opacity: 0.55 },
+        (disabled || busy) && { opacity: 0.55 },
       ]}>
       {busy ? (
         <ActivityIndicator color={l.fg} />
@@ -111,7 +111,7 @@ export function Button({
           <Text style={{ fontFamily: FONT.semibold, fontSize: small ? 13 : 16, color: l.fg }}>{label}</Text>
         </View>
       )}
-    </Pressable>
+    </MotionPressable>
   );
 }
 
@@ -121,13 +121,13 @@ export function Chip({ label, onPress, active, tone }: { label: string; onPress?
   const bg = active ? c.active : (tone ?? c.soft);
   const fg = active ? (c.active === BRAND.ink ? '#FFFFFF' : BRAND.ink) : tone ? BRAND.ink : c.text;
   return (
-    <Pressable
+    <MotionPressable
       onPress={onPress}
       style={[s.chip, { backgroundColor: bg }]}
       accessibilityRole={onPress ? 'button' : 'text'}
       accessibilityState={onPress ? { selected: !!active } : undefined}>
       <Text style={{ color: fg, fontSize: 13, fontFamily: active ? FONT.semibold : FONT.medium }}>{label}</Text>
-    </Pressable>
+    </MotionPressable>
   );
 }
 
@@ -216,8 +216,9 @@ export function TaskCard({
     taskSourcesLabel(task.sources ?? [], task.source),
   ].join(' · ');
   return (
-    <Pressable
+    <MotionPressable
       onLongPress={onLongPress}
+      pressedScale={0.985}
       accessibilityHint={onLongPress ? 'Nhấn giữ để đổi hạn' : undefined}
       style={[s.taskCard, { backgroundColor: bg }, overlap && { marginTop: -24 }]}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
@@ -238,16 +239,16 @@ export function TaskCard({
         <CategoryCharacter category={task.category} cardBg={bg} size={72} />
       </View>
       {onDone && (
-        <Pressable
+        <MotionPressable
           onPress={onDone}
           hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel={`Đánh dấu xong: ${task.title}`}
           style={s.done}>
           <Icon name="check" color="#FFFFFF" size={20} stroke={2.6} />
-        </Pressable>
+        </MotionPressable>
       )}
-    </Pressable>
+    </MotionPressable>
   );
 }
 

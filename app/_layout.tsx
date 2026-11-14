@@ -13,6 +13,7 @@ import { useColorScheme } from '@/components/useColorScheme';
 import { FONT, PALETTES } from '@/constants/theme';
 import { configureNotifications, inviteAnswer } from '@/lib/notifications';
 import { StoreProvider, useStore } from '@/lib/store';
+import { ReducedMotionProvider } from '@/lib/useReducedMotion';
 
 export { ErrorBoundary } from 'expo-router';
 
@@ -27,9 +28,11 @@ const SHARE_ENABLED = !!ShareIntentModule;
 export default function RootLayout() {
   return (
     <ShareIntentProvider options={{ disabled: !SHARE_ENABLED, resetOnBackground: false }}>
-      <StoreProvider>
-        <RootNav />
-      </StoreProvider>
+      <ReducedMotionProvider>
+        <StoreProvider>
+          <RootNav />
+        </StoreProvider>
+      </ReducedMotionProvider>
     </ShareIntentProvider>
   );
 }
