@@ -1,8 +1,8 @@
-# AGENTS.md — MStudent app (Expo)
+# AGENTS.md — MStudent app iOS (Expo)
 
 Hướng dẫn cho mọi coding agent (Codex, Claude Code, Cursor, Copilot) làm việc trong repo này.
 
-> Repo này là **app điện thoại** iOS/Android. Máy chủ, agent AI, tài liệu chung và spec ở repo backend: https://github.com/muoibuon/mstudent-backend
+> Repo này là **app iOS** (bản Android: https://github.com/muoibuon/mstudent-android). Máy chủ, agent AI, tài liệu chung và spec ở repo backend: https://github.com/muoibuon/mstudent-backend
 
 ## Sản phẩm
 
@@ -18,7 +18,7 @@ npm test && npm run typecheck && npx expo lint     # phải xanh trước khi pu
 npx expo start                                     # Expo Go (không có Google, share, push)
 ```
 
-Build cài máy: xem [`README.md`](README.md) và [`docs/HANDOFF_ANDROID.md`](docs/HANDOFF_ANDROID.md).
+Build cài máy: xem [`README.md`](README.md) và [`docs/BUILD_IOS.md`](docs/BUILD_IOS.md).
 
 ## Cấu trúc
 
@@ -43,5 +43,6 @@ lib/__tests__/  test node:test cho logic thuần
 6. Link mở từ dữ liệu máy chủ chỉ nhận http(s) (`lib/events.ts`); link Google Form điền sẵn dựng trên máy
    (`lib/prefill.ts`) và app không bao giờ tự gửi form.
 7. Chữ hiển thị tiếng Việt, hỗ trợ dark mode qua `usePalette()`; tên biến, hàm, commit tiếng Anh.
-8. Nhánh riêng cho mỗi việc, mỗi PR một việc, tạo từ `dev`, PR vào `dev`; không push thẳng vào `master`. Báo cáo ngắn: làm gì, file nào, test ra sao,
+8. Mã màn hình và `lib/` giống repo Android: thay đổi dùng chung phải được mang sang repo kia (ghi link PR).
+9. Nhánh riêng cho mỗi việc, mỗi PR một việc, tạo từ `dev`, PR vào `dev`; không push thẳng vào `master`. Báo cáo ngắn: làm gì, file nào, test ra sao,
    **chưa kiểm tra được gì** (Expo Go hay cần bản build).

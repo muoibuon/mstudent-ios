@@ -1,8 +1,11 @@
-# MStudent — app iOS & Android (Expo SDK 58)
+# MStudent — app iOS (Expo SDK 58)
 
-> Repo này chỉ có **app**. Backend (FastAPI, agent AI), tài liệu chung và spec: https://github.com/muoibuon/mstudent-backend
-> Quy tắc cho người và coding agent: [`AGENTS.md`](AGENTS.md). Trước khi push: `npm test && npm run typecheck && npx expo lint`.
-> Làm việc nhóm: nhánh việc tạo từ `dev`, PR vào `dev`; `master` là bản ổn định (`dev` → `master` bằng PR khi đã thử xong); backend đổi API thì cập nhật `lib/types.ts` + `lib/api.ts`.
+> Repo này là bản **iOS** của app MStudent. Bản Android: https://github.com/muoibuon/mstudent-android · Backend (FastAPI, agent AI), tài liệu chung và spec: https://github.com/muoibuon/mstudent-backend
+> Hai repo app cùng xuất phát từ một bộ mã: màn hình và `lib/` giống nhau. **Sửa lỗi hay thêm tính năng dùng chung thì
+> mở PR tương ứng ở repo Android** để hai bản không lệch nhau; backend đổi API thì cập nhật `lib/types.ts` + `lib/api.ts`.
+> Quy tắc: [`AGENTS.md`](AGENTS.md). Trước khi push: `npm test && npm run typecheck && npx expo lint`.
+> Nhánh: việc tạo từ `dev`, PR vào `dev`; `master` là bản ổn định.
+
 App gọi backend FastAPI; mọi agent chạy trên server. App **không chứa** khoá LLM hay client secret.
 
 | Màn hình | Làm gì |
@@ -17,13 +20,12 @@ App gọi backend FastAPI; mọi agent chạy trên server. App **không chứa*
 **Đóng hẳn rồi mở lại:** refresh token nằm trong Keychain/Keystore; app tự khôi phục phiên, hiện ngay việc đã lưu rồi tải
 mới. Server tạm mất kết nối cũng không bị đẩy ra màn hình đăng nhập.
 
-## 3 cách chạy
+## 2 cách chạy
 
 | Cách | Lệnh | Có gì | Dùng khi |
 |---|---|---|---|
 | **Expo Go** | `npx expo start` → quét QR | Chat, việc, lịch, nhắc việc. Không có Google, Gmail, Share | Thử nhanh khi code |
-| **Build cài máy (Release)** | Android: `npx eas-cli@latest build --profile preview --platform android` → APK<br>iOS: `npx expo prebuild --clean && npx expo run:ios --device --configuration Release` | Đầy đủ, chạy độc lập không cần máy tính bật Metro | **Demo chấm điểm** |
-| Web | `npx expo start --web` | Giao diện để kiểm thử tự động | Không dùng để demo |
+| **Build cài máy (Release)** | `npx expo prebuild --platform ios --clean` rồi build bằng Xcode / `xcodebuild` — xem [`docs/BUILD_IOS.md`](docs/BUILD_IOS.md) | Đầy đủ, chạy độc lập không cần máy tính bật Metro | **Demo chấm điểm** |
 
 Biến môi trường khi build:
 
@@ -33,7 +35,6 @@ Biến môi trường khi build:
 | `GOOGLE_IOS_URL_SCHEME` | Bắt buộc cho Google Sign-In trên iOS: `com.googleusercontent.apps.<iOS client ID đảo ngược>` |
 | `MSTUDENT_HTTPS_ONLY=1` | Cấm HTTP thường. Mặc định cho phép HTTP **trong mạng nội bộ** để gọi backend localhost |
 
-Android cần đăng ký SHA-1 của khoá ký trong Google Cloud Console — xem [GOOGLE_CLOUD_SETUP.md](https://github.com/muoibuon/mstudent-backend/blob/master/docs/GOOGLE_CLOUD_SETUP.md) (repo backend).
 Không commit `ios/` và `android/` (sinh ra bởi `expo prebuild`). Bundle id / package: `vn.muoibuon.mstudent`.
 
 ## Kết nối tới backend chạy trên máy tính
