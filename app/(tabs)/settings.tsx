@@ -298,7 +298,7 @@ function Stat({ value, label, tone }: { value: number; label: string; tone?: str
   const onTone = !!tone;
   return (
     <View style={[styles.stat, { backgroundColor: tone ?? c.soft }]}>
-      <T style={{ fontFamily: FONT.bold, fontSize: 24, fontVariant: ['tabular-nums'] }} color={onTone ? BRAND.ink : c.text}>
+      <T style={{ fontFamily: FONT.bold, fontSize: 24, lineHeight: 36, fontVariant: ['tabular-nums'] }} color={onTone ? BRAND.ink : c.text}>
         {value}
       </T>
       <T style={{ fontSize: 12 }} color={onTone ? BRAND.ink : c.muted}>
