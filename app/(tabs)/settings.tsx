@@ -14,6 +14,7 @@ import { gmailGrantErrorMessage } from '@/lib/errors';
 import { googleAvailable, googleGrantGmail } from '@/lib/google';
 import { scheduledCount, sendTest, supported as notifSupported } from '@/lib/notifications';
 import { useStore } from '@/lib/store';
+import { useReducedMotion } from '@/lib/useReducedMotion';
 import type { AiCheck, GmailStatus, PublicConfig, Stats } from '@/lib/types';
 
 export default function SettingsScreen() {
@@ -22,6 +23,7 @@ export default function SettingsScreen() {
 
 function SettingsContent() {
   const c = usePalette();
+  const reducedMotion = useReducedMotion();
   const insets = useSafeAreaInsets();
   const { user, settings, updateSettings, health, error, refresh, scheduled, signOut, reloadUser, tasks } = useStore();
   const [busy, setBusy] = useState<string | null>(null);
@@ -127,6 +129,9 @@ function SettingsContent() {
           )}
           <T v="small" color={BRAND.mintInk} style={{ marginTop: 4 }}>
             Máy chủ: {settings.baseUrl.replace(/^https?:\/\//, '')}
+          </T>
+          <T v="small" color={BRAND.mintInk} style={{ marginTop: 4 }}>
+            Chuyển động: {reducedMotion ? 'đang tắt theo cài đặt Trợ năng của điện thoại' : 'đang bật'}
           </T>
           <View style={{ marginTop: 12, alignSelf: 'flex-start' }}>
             <Button small variant="dark" label="Kiểm tra AI ngay" busy={busy === 'ai'} onPress={() => run('ai', async () => setAi(await api.aiCheck()))} />
