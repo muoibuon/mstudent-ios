@@ -10,6 +10,7 @@ import { Platform } from 'react-native';
 import type {
   AiCheck,
   ChatResponse,
+  ChatFile,
   ChatTurn,
   GmailStatus,
   GmailSyncResult,
@@ -99,7 +100,7 @@ async function raw<T>(path: string, init: RequestInit, timeoutMs: number, withAu
   if (!baseUrl) throw new ApiError('Chưa nhập địa chỉ server', 0);
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  const headers: Record<string, string> = init.body instanceof FormData ? {} : { 'Content-Type': 'application/json' };
   if (withAuth && accessToken) headers.Authorization = `Bearer ${accessToken}`;
   let res: Response;
   try {
@@ -209,6 +210,14 @@ export const api = {
     call<Task>(`/api/tasks/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   ingest: (body: string, source: Source) => call<IngestResult>('/api/ingest', post({ body, source }), 60000),
   chat: (message: string, history: ChatTurn[]) => call<ChatResponse>('/api/chat', post({ message, history }), 90000),
+  chatFile: (file: ChatFile, message: string, history: ChatTurn[]) => {
+    const form = new FormData();
+    form.append('message', message);
+    form.append('history', JSON.stringify(history));
+    if (Platform.OS === 'web' && file.file) form.append('file', file.file, file.name);
+    else form.append('file', { uri: file.uri, name: file.name, type: file.mimeType || 'application/octet-stream' } as unknown as Blob);
+    return call<ChatResponse>('/api/chat/file', { method: 'POST', body: form }, 90000);
+  },
   digest: () => call<{ mode: string; text: string }>('/api/digest', {}, 60000),
   stats: () => call<Stats>('/api/stats'),
   seed: () => call<IngestResult[]>('/api/demo/seed', post(), 120000),
