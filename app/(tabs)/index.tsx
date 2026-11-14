@@ -3,7 +3,7 @@
 
 import { router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, FlatList, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Animated, FlatList, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/Icon';
@@ -94,7 +94,7 @@ function ChatContent() {
           <T v="small" color={c.muted} style={{ textTransform: 'capitalize' }}>
             {dateLabel}
           </T>
-          {health && <ModePill live={health.mode === 'llm'} />}
+          {health && health.mode !== 'llm' && <ModePill live={false} />}
         </View>
         <T v="h1" accessibilityRole="header">
           {greeting(now)}
@@ -170,7 +170,6 @@ function ChatContent() {
 
 function Bubble({ msg }: { msg: Msg }) {
   const c = usePalette();
-  const [open, setOpen] = useState(false);
   if (msg.role === 'user') {
     return (
       <View style={[styles.bubble, styles.mine]}>
@@ -188,21 +187,6 @@ function Bubble({ msg }: { msg: Msg }) {
             <ModePill live={false} />
           </View>
         )}
-        {!!msg.calls?.length && (
-          <Pressable onPress={() => setOpen((o) => !o)} accessibilityRole="button" style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 }}>
-            <Icon name="tool" color={c.muted} size={14} />
-            <T style={{ fontSize: 12 }} color={c.muted}>
-              {msg.calls.length} lần gọi tool · {msg.mode}
-              {open ? ' ▾' : ' ▸'}
-            </T>
-          </Pressable>
-        )}
-        {open &&
-          msg.calls?.map((t, i) => (
-            <T key={i} style={[styles.code, { backgroundColor: c.bg }]}>
-              {`${t.tool}(${JSON.stringify(t.args)})\n→ ${t.result}`}
-            </T>
-          ))}
       </View>
     </View>
   );

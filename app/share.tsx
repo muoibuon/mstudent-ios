@@ -132,7 +132,7 @@ export default function ShareScreen() {
                   {status}
                 </T>
               </View>
-              <ModePill live={result.mode === 'llm'} label={result.mode === 'cache' ? 'Không chạy lại agent' : undefined} />
+              {result.mode === 'offline' && <ModePill live={false} />}
             </View>
             {tasks.map((t, i) => (
               <TaskCard key={`${t.id}-${i}`} task={t} now={now} overlap={i > 0} />

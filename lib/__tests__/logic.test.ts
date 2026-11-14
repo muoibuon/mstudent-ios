@@ -286,3 +286,40 @@ test('newInvites / inviteNotice', () => {
   assert.deepEqual(inviteNotice(a, 'T6 20/11 14:00'), { title: 'Sự kiện mới: Seminar AI', body: 'Rất hợp ngành · T6 20/11 14:00 · Tham gia không?' });
   assert.equal(inviteNotice(b, '').body, 'chưa rõ giờ · Tham gia không?');
 });
+
+// ---- Bản tin sáng: dọn markdown ----
+import { cleanDigest } from '../digest';
+
+test('cleanDigest bỏ **, đường kẻ, "— — —", gạch đầu dòng lạ', () => {
+  const raw = [
+    'Có **1 việc ưu tiên cao đã quá hạn**; không có hạn mới.',
+    '',
+    '**Đã quá hạn — 5/11**',
+    '- 23:59 — Nộp học phí và BHYT 2027 ⚠️',
+    '———',
+    '',
+    '',
+    '**Chưa có ngày hạn**',
+    '- — Xem xét quyền cập nhật Claude — — — liên kết GitHub',
+    '- — Gemini 4 NYC Hackathon — — — New York City',
+    '## Ưu tiên hôm nay',
+    '**Ưu tiên hôm nay:** kiểm tra khoản học phí',
+  ].join('\n');
+  assert.equal(
+    cleanDigest(raw),
+    [
+      'Có 1 việc ưu tiên cao đã quá hạn; không có hạn mới.',
+      '',
+      'Đã quá hạn — 5/11',
+      '• 23:59 — Nộp học phí và BHYT 2027 ⚠️',
+      '',
+      'Chưa có ngày hạn',
+      '• Xem xét quyền cập nhật Claude · liên kết GitHub',
+      '• Gemini 4 NYC Hackathon · New York City',
+      'Ưu tiên hôm nay',
+      'Ưu tiên hôm nay: kiểm tra khoản học phí',
+    ].join('\n'),
+  );
+  assert.equal(cleanDigest('Tuần này chưa có việc nào có hạn. 🎉'), 'Tuần này chưa có việc nào có hạn. 🎉');
+  assert.equal(cleanDigest(''), '');
+});

@@ -15,7 +15,6 @@ import { gmailGrantErrorMessage } from '@/lib/errors';
 import { googleAvailable, googleGrantGmail } from '@/lib/google';
 import { scheduledCount, sendTest, supported as notifSupported } from '@/lib/notifications';
 import { useStore } from '@/lib/store';
-import { useReducedMotion } from '@/lib/useReducedMotion';
 import type { AiCheck, GmailStatus, PublicConfig, Stats } from '@/lib/types';
 
 export default function SettingsScreen() {
@@ -24,7 +23,6 @@ export default function SettingsScreen() {
 
 function SettingsContent() {
   const c = usePalette();
-  const reducedMotion = useReducedMotion();
   const insets = useSafeAreaInsets();
   const { user, settings, updateSettings, health, error, refresh, scheduled, signOut, reloadUser, tasks } = useStore();
   const [busy, setBusy] = useState<string | null>(null);
@@ -115,33 +113,20 @@ function SettingsContent() {
           <Display size={22} color={BRAND.mintInk}>
             AI
           </Display>
-          {health ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 }}>
-              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: health.mode === 'llm' ? '#1A9E6A' : BRAND.amberInk }} />
-              <T style={{ fontFamily: FONT.semibold }} color={BRAND.mintInkDeep}>
-                {health.mode !== 'llm'
-                  ? 'Bộ luật (offline) — AI chưa bật'
-                  : health.filter_model && health.filter_model !== health.model
-                    ? `Trực tiếp · lọc: ${health.filter_model} · trả lời: ${health.model}`
-                    : `Trực tiếp · ${health.model}`}
-              </T>
-            </View>
-          ) : (
-            <T color={BRAND.mintInkDeep}>{error ?? 'Chưa kết nối máy chủ'}</T>
-          )}
-          <T v="small" color={BRAND.mintInk} style={{ marginTop: 4 }}>
-            Máy chủ: {settings.baseUrl.replace(/^https?:\/\//, '')}
-          </T>
-          <T v="small" color={BRAND.mintInk} style={{ marginTop: 4 }}>
-            Chuyển động: {reducedMotion ? 'đang tắt theo cài đặt Trợ năng của điện thoại' : 'đang bật'}
-          </T>
+          {!health ? (
+            <T color={BRAND.mintInkDeep} style={{ marginTop: 6 }}>{error ?? 'Chưa kết nối được máy chủ'}</T>
+          ) : health.mode !== 'llm' ? (
+            <T style={{ fontFamily: FONT.semibold, marginTop: 6 }} color={BRAND.mintInkDeep}>
+              Bộ luật (offline) — AI chưa bật
+            </T>
+          ) : null}
           <View style={{ marginTop: 12, alignSelf: 'flex-start' }}>
             <Button small variant="dark" label="Kiểm tra AI ngay" busy={busy === 'ai'} onPress={() => run('ai', async () => setAi(await api.aiCheck()))} />
           </View>
           {ai && (
             <MotionAppear key={`${ai.model}-${ai.latency_ms}`}>
               <T v="small" color={ai.ok ? BRAND.mintInkDeep : c.bad} style={{ marginTop: 8 }}>
-                {ai.ok ? `AI trả lời sau ${ai.latency_ms} ms (${ai.model})` : (ai.error ?? 'AI trả kết quả không đúng')}
+                {ai.ok ? `AI đang hoạt động · trả lời sau ${((ai.latency_ms ?? 0) / 1000).toFixed(1)} giây` : (ai.error ?? 'AI trả kết quả không đúng')}
               </T>
             </MotionAppear>
           )}
