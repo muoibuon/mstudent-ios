@@ -77,17 +77,25 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [scheduled, setScheduled] = useState(0);
   const nowOffset = useRef(0); // chênh lệch giữa giờ server và giờ máy
   const userRef = useRef<User | null>(null);
+  // Bỏ kết quả tải về của phiên cũ hoặc của lần làm mới bị lần mới hơn vượt qua.
+  const sessionVersion = useRef(0);
+  const refreshVersion = useRef(0);
 
   const enter = useCallback(async (u: User) => {
+    const version = ++sessionVersion.current;
     userRef.current = u;
     setUser(u);
+    setTasks([]);
     await AsyncStorage.setItem(USER_KEY, JSON.stringify(u)).catch(() => {});
     const cached = await readJson<Task[]>(tasksKey(u.id));
+    if (sessionVersion.current !== version) return;
     if (cached) setTasks(cached); // có ngay nội dung trước khi mạng trả lời
     setStatus('signedIn');
   }, []);
 
   const leave = useCallback(async () => {
+    ++sessionVersion.current;
+    ++refreshVersion.current;
     const u = userRef.current;
     userRef.current = null;
     setUser(null);
@@ -95,38 +103,50 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setInvites([]);
     setProfile(null);
     setStatus('signedOut');
+    setLoading(false);
     await clearReminders().catch(() => {});
     setScheduled(0);
     await AsyncStorage.multiRemove([USER_KEY, ...(u ? [tasksKey(u.id)] : [])]).catch(() => {});
   }, []);
 
   const refresh = useCallback(async () => {
-    if (!userRef.current) return;
+    const u = userRef.current;
+    if (!u) return;
+    const session = sessionVersion.current;
+    const request = ++refreshVersion.current;
+    const isCurrent = () =>
+      sessionVersion.current === session && refreshVersion.current === request && userRef.current?.id === u.id;
     setLoading(true);
     try {
       const h = await api.health();
+      if (!isCurrent()) return;
       nowOffset.current = new Date(h.now).getTime() - Date.now();
       setHealth(h);
       const list = await api.tasks();
+      if (!isCurrent()) return;
       setTasks(list);
       setError(null);
       // 003: lời mời + hồ sơ; máy chủ cũ chưa có các endpoint này → bỏ qua, không làm hỏng danh sách việc.
       api
         .events('pending')
         .then((ev) => {
+          if (!isCurrent()) return;
           setInvites(ev);
           saveSeenInvites(ev.map((t) => t.id));
         })
         .catch(() => {});
-      api.profile().then(setProfile).catch(() => {});
-      if (userRef.current) AsyncStorage.setItem(tasksKey(userRef.current.id), JSON.stringify(list)).catch(() => {});
+      api.profile().then((p) => {
+        if (isCurrent()) setProfile(p);
+      }).catch(() => {});
+      AsyncStorage.setItem(tasksKey(u.id), JSON.stringify(list)).catch(() => {});
     } catch (e) {
+      if (!isCurrent()) return;
       if (!(e instanceof ApiError && e.status === 401)) {
         setError((e as Error).message);
         setHealth(null);
       }
     } finally {
-      setLoading(false);
+      if (isCurrent()) setLoading(false);
     }
   }, []);
 
