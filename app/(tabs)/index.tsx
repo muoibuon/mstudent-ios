@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/Icon';
 import { Meme, MemeAvatar } from '@/components/Mascot';
+import { MotionScreen } from '@/components/MotionEntrance';
 import { MotionPressable } from '@/components/MotionPressable';
 import { Chip, Display, ErrorBanner, ModePill, T, timeLabel } from '@/components/ui';
 import { BRAND, FONT, SCREEN_PAD, TAB_BAR_SPACE, usePalette } from '@/constants/theme';
@@ -34,6 +35,10 @@ function greeting(now: Date): string {
 }
 
 export default function ChatScreen() {
+  return <MotionScreen><ChatContent /></MotionScreen>;
+}
+
+function ChatContent() {
   const c = usePalette();
   const reducedMotion = useReducedMotion();
   const insets = useSafeAreaInsets();
@@ -57,7 +62,7 @@ export default function ChatScreen() {
   const soonest = [...today].sort((a, b) => (a.due_at ?? '').localeCompare(b.due_at ?? ''))[0];
   const overdue = tasks.some((t) => bucketOf(t.due_at, now) === 'Quá hạn');
   const nearUrgent = today.some((t) => t.priority === 'high' && t.due_at && new Date(t.due_at).getTime() - now.getTime() < 2 * 60 * 60 * 1000);
-  const mood = error || health?.mode === 'offline' ? 'offline' : overdue || nearUrgent ? 'worried' : 'happy';
+  const mood = busy ? 'thinking' : error || health?.mode === 'offline' ? 'offline' : overdue || nearUrgent ? 'worried' : 'happy';
 
   async function send(text = input) {
     const message = text.trim();

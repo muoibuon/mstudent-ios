@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/Icon';
 import { EventActions, InviteCard } from '@/components/InviteCard';
 import { Meme } from '@/components/Mascot';
+import { MotionScreen } from '@/components/MotionEntrance';
 import { MotionPressable } from '@/components/MotionPressable';
 import { Display, ErrorBanner, Muted, T, TaskCard } from '@/components/ui';
 import { BRAND, FONT, SCREEN_PAD, TAB_BAR_SPACE, usePalette } from '@/constants/theme';
@@ -20,6 +21,10 @@ import type { Task } from '@/lib/types';
 import { useStore } from '@/lib/store';
 
 export default function TasksScreen() {
+  return <MotionScreen><TasksContent /></MotionScreen>;
+}
+
+function TasksContent() {
   const c = usePalette();
   const insets = useSafeAreaInsets();
   const { tasks, invites, profile, user, respond, now, loading, error, refresh, markDone, health } = useStore();

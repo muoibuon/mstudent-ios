@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/Icon';
 import { Meme } from '@/components/Mascot';
+import { MotionAppear, MotionScreen } from '@/components/MotionEntrance';
 import { MotionPressable } from '@/components/MotionPressable';
 import { Button, Muted, T, TaskCard } from '@/components/ui';
 import { BRAND, FONT, SCREEN_PAD, TAB_BAR_SPACE, usePalette } from '@/constants/theme';
@@ -18,6 +19,10 @@ import type { Task } from '@/lib/types';
 const DOW = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 
 export default function CalendarScreen() {
+  return <MotionScreen><CalendarContent /></MotionScreen>;
+}
+
+function CalendarContent() {
   const c = usePalette();
   const insets = useSafeAreaInsets();
   const { tasks, now, markDone, moveTask } = useStore();
@@ -90,20 +95,22 @@ export default function CalendarScreen() {
           </T>
           {!!dayTasks.length && <Muted>{dayTasks.length} việc</Muted>}
         </View>
-        {dayTasks.length ? (
-          <>
-            {dayTasks.map((t, i) => (
-              <TaskCard key={t.id} task={t} now={now} overlap={i > 0} entranceDelay={Math.min(i, 3) * 80} onDone={() => markDone(t.id)} onLongPress={() => setMoving(t)} />
-            ))}
-            <Muted style={{ marginTop: 12 }}>Nhấn giữ một việc để dời sang ngày khác.</Muted>
-          </>
-        ) : (
-          <View style={{ borderRadius: 28, backgroundColor: c.soft, paddingVertical: 28, paddingHorizontal: 20, alignItems: 'center', gap: 8 }}>
-            <Meme size={80} mood="sleepy" />
-            <T style={{ fontFamily: FONT.semibold }}>Ngày này rảnh rồi!</T>
-            <Muted>Không có việc nào trong ngày này.</Muted>
-          </View>
-        )}
+        <MotionAppear key={selected}>
+          {dayTasks.length ? (
+            <>
+              {dayTasks.map((t, i) => (
+                <TaskCard key={t.id} task={t} now={now} overlap={i > 0} entranceDelay={Math.min(i, 3) * 80} onDone={() => markDone(t.id)} onLongPress={() => setMoving(t)} />
+              ))}
+              <Muted style={{ marginTop: 12 }}>Nhấn giữ một việc để dời sang ngày khác.</Muted>
+            </>
+          ) : (
+            <View style={{ borderRadius: 28, backgroundColor: c.soft, paddingVertical: 28, paddingHorizontal: 20, alignItems: 'center', gap: 8 }}>
+              <Meme size={80} mood="sleepy" />
+              <T style={{ fontFamily: FONT.semibold }}>Ngày này rảnh rồi!</T>
+              <Muted>Không có việc nào trong ngày này.</Muted>
+            </View>
+          )}
+        </MotionAppear>
       </ScrollView>
 
       <MoveSheet
