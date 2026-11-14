@@ -117,6 +117,9 @@ async function raw<T>(path: string, init: RequestInit, timeoutMs: number, withAu
     clearTimeout(timer);
   }
   if (!res.ok) {
+    if (res.status === 404 && path === '/api/chat/file') {
+      throw new ApiError('Máy chủ chưa hỗ trợ tải tệp. Hãy cập nhật backend rồi gửi lại; tệp vẫn đang được giữ trong ô chat.', 404);
+    }
     const body = await res.json().catch(() => ({}));
     const d = (body as { detail?: unknown }).detail;
     const msg = Array.isArray(d) ? d.map((x: { msg?: string }) => x.msg).join('; ') : String(d ?? `Lỗi ${res.status}`);
