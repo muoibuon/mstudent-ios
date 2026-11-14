@@ -4,6 +4,8 @@
 // - Không bao giờ chứa API key của LLM hay client secret của Google — những thứ đó chỉ ở server.
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { fetch as expoFetch } from 'expo/fetch';
+import { File as ExpoFile } from 'expo-file-system';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
@@ -102,11 +104,14 @@ async function raw<T>(path: string, init: RequestInit, timeoutMs: number, withAu
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   const headers: Record<string, string> = init.body instanceof FormData ? {} : { 'Content-Type': 'application/json' };
   if (withAuth && accessToken) headers.Authorization = `Bearer ${accessToken}`;
-  let res: Response;
+  let res: Pick<Response, 'ok' | 'status' | 'json'>;
   try {
-    res = await fetch(baseUrl + path, { ...init, headers, signal: ctrl.signal });
+    res = init.body instanceof FormData
+      ? await expoFetch(baseUrl + path, { ...init, headers, signal: ctrl.signal })
+      : await fetch(baseUrl + path, { ...init, headers, signal: ctrl.signal });
   } catch (e) {
     if ((e as Error).name === 'AbortError') throw new ApiError('Server không phản hồi (quá thời gian)', 0);
+    if (init.body instanceof FormData) throw new ApiError('Không gửi được tệp. Hãy chọn lại rồi thử tiếp.', 0);
     throw new ApiError(`Không kết nối được ${baseUrl}`, 0);
   } finally {
     clearTimeout(timer);
@@ -215,7 +220,11 @@ export const api = {
     form.append('message', message);
     form.append('history', JSON.stringify(history));
     if (Platform.OS === 'web' && file.file) form.append('file', file.file, file.name);
-    else form.append('file', { uri: file.uri, name: file.name, type: file.mimeType || 'application/octet-stream' } as unknown as Blob);
+    else {
+      const local = new ExpoFile(file.uri);
+      if (!local.exists) throw new ApiError('Không đọc được tệp đã chọn. Hãy chọn lại.', 0);
+      form.append('file', local, file.name);
+    }
     return call<ChatResponse>('/api/chat/file', { method: 'POST', body: form }, 90000);
   },
   digest: () => call<{ mode: string; text: string }>('/api/digest', {}, 60000),
