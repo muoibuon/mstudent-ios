@@ -27,6 +27,7 @@ interface Msg {
   calls?: ToolCall[];
   mode?: string;
   context?: string;
+  calendar?: boolean;
 }
 
 const SUGGESTIONS = ['Hôm nay cần làm gì?', 'Tuần này có gì?', 'Lịch thi sắp tới', 'Bản tin', 'Thêm: thứ 6 tuần sau nộp đồ án OOP'];
@@ -94,7 +95,8 @@ function ChatContent() {
       setMsgs((m) => [
         ...m,
         { id: `u${Date.now()}`, role: 'user', text: attachment ? `📎 ${attachment.name}${message ? `\n${message}` : ''}` : message, context: r.document_context ?? undefined },
-        { id: `a${Date.now()}`, role: 'assistant', text: r.reply, calls: r.tool_calls, mode: r.mode },
+        { id: `a${Date.now()}`, role: 'assistant', text: r.reply, calls: r.tool_calls, mode: r.mode,
+          calendar: r.tool_calls.some((t) => t.tool === 'import_schedule') && !r.reply.startsWith('Chưa') },
       ]);
       if (!attachment || text === input) setInput('');
       if (attachment) setFile(null);
@@ -247,6 +249,7 @@ function Bubble({ msg }: { msg: Msg }) {
               {`${t.tool}(${JSON.stringify(t.args)})\n→ ${t.result}`}
             </T>
           ))}
+        {msg.calendar && <Chip label="Mở Lịch" onPress={() => router.navigate('/calendar')} />}
       </View>
     </View>
   );
