@@ -4,10 +4,12 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useShareIntentContext } from 'expo-share-intent';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/Icon';
+import { Meme } from '@/components/Mascot';
+import { MotionPressable } from '@/components/MotionPressable';
 import { Button, Chip, Display, ModePill, Muted, T, TaskCard } from '@/components/ui';
 import { BRAND, FONT, SCREEN_PAD, usePalette } from '@/constants/theme';
 import { api } from '@/lib/api';
@@ -83,9 +85,9 @@ export default function ShareScreen() {
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: BRAND.cobalt }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
         <Display size={32}>{hasShareIntent ? 'Chia sẻ thông báo' : 'Dán thông báo'}</Display>
-        <Pressable onPress={close} accessibilityRole="button" accessibilityLabel="Đóng" style={styles.close}>
+        <MotionPressable onPress={close} accessibilityRole="button" accessibilityLabel="Đóng" style={styles.close}>
           <Icon name="close" color="#FFFFFF" size={20} stroke={2.4} />
-        </Pressable>
+        </MotionPressable>
       </View>
 
       <ScrollView
@@ -113,6 +115,12 @@ export default function ShareScreen() {
           ))}
         </View>
         <Button label="Phân tích bằng AI" busy={busy} disabled={!text.trim()} onPress={analyze} />
+        {busy && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }} accessibilityRole="progressbar" accessibilityLabel="Đang phân tích thông báo">
+            <Meme size={56} mood="thinking" />
+            <T v="small" color={c.muted}>Meme đang đọc thông báo…</T>
+          </View>
+        )}
         {err && <T v="small" color={c.bad}>{err}</T>}
 
         {result && (

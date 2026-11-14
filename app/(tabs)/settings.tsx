@@ -6,6 +6,7 @@ import { Alert, Platform, Pressable, ScrollView, StyleSheet, Switch, TextInput, 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, Card, Display, Muted, T } from '@/components/ui';
+import { MotionAppear, MotionScreen } from '@/components/MotionEntrance';
 import { BRAND, FONT, SCREEN_PAD, TAB_BAR_SPACE, usePalette } from '@/constants/theme';
 import { api, authApi } from '@/lib/api';
 import { fmtDue } from '@/lib/dates';
@@ -13,10 +14,16 @@ import { gmailGrantErrorMessage } from '@/lib/errors';
 import { googleAvailable, googleGrantGmail } from '@/lib/google';
 import { scheduledCount, sendTest, supported as notifSupported } from '@/lib/notifications';
 import { useStore } from '@/lib/store';
+import { useReducedMotion } from '@/lib/useReducedMotion';
 import type { AiCheck, GmailStatus, PublicConfig, Stats } from '@/lib/types';
 
 export default function SettingsScreen() {
+  return <MotionScreen><SettingsContent /></MotionScreen>;
+}
+
+function SettingsContent() {
   const c = usePalette();
+  const reducedMotion = useReducedMotion();
   const insets = useSafeAreaInsets();
   const { user, settings, updateSettings, health, error, refresh, scheduled, signOut, reloadUser, tasks } = useStore();
   const [busy, setBusy] = useState<string | null>(null);
@@ -81,7 +88,7 @@ export default function SettingsScreen() {
 
   return (
     <ScrollView
-      style={{ backgroundColor: c.bg }}
+      style={{ flex: 1, backgroundColor: c.bg }}
       contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE + insets.bottom + 8 }}
       keyboardShouldPersistTaps="handled">
       <View style={[styles.hero, { paddingTop: insets.top + 16 }]}>
@@ -123,13 +130,18 @@ export default function SettingsScreen() {
           <T v="small" color={BRAND.mintInk} style={{ marginTop: 4 }}>
             Máy chủ: {settings.baseUrl.replace(/^https?:\/\//, '')}
           </T>
+          <T v="small" color={BRAND.mintInk} style={{ marginTop: 4 }}>
+            Chuyển động: {reducedMotion ? 'đang tắt theo cài đặt Trợ năng của điện thoại' : 'đang bật'}
+          </T>
           <View style={{ marginTop: 12, alignSelf: 'flex-start' }}>
             <Button small variant="dark" label="Kiểm tra AI ngay" busy={busy === 'ai'} onPress={() => run('ai', async () => setAi(await api.aiCheck()))} />
           </View>
           {ai && (
-            <T v="small" color={ai.ok ? BRAND.mintInkDeep : c.bad} style={{ marginTop: 8 }}>
-              {ai.ok ? `AI trả lời sau ${ai.latency_ms} ms (${ai.model})` : (ai.error ?? 'AI trả kết quả không đúng')}
-            </T>
+            <MotionAppear key={`${ai.model}-${ai.latency_ms}`}>
+              <T v="small" color={ai.ok ? BRAND.mintInkDeep : c.bad} style={{ marginTop: 8 }}>
+                {ai.ok ? `AI trả lời sau ${ai.latency_ms} ms (${ai.model})` : (ai.error ?? 'AI trả kết quả không đúng')}
+              </T>
+            </MotionAppear>
           )}
         </Card>
 
