@@ -4,7 +4,7 @@
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { Tabs } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, View } from 'react-native';
+import { Animated, Easing, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, type IconName } from '@/components/Icon';
@@ -116,8 +116,19 @@ function FloatingTabBar({ state, navigateToTab }: BottomTabBarProps) {
 }
 
 export default function TabLayout() {
+  const reducedMotion = useReducedMotion();
+
   return (
-    <Tabs tabBar={(props) => <FloatingTabBar {...props} />} screenOptions={{ headerShown: false }}>
+    <Tabs
+      tabBar={(props) => <FloatingTabBar {...props} />}
+      screenOptions={{
+        headerShown: false,
+        animation: reducedMotion ? 'none' : 'shift',
+        transitionSpec: {
+          animation: 'timing',
+          config: { duration: 220, easing: Easing.out(Easing.cubic) },
+        },
+      }}>
       <Tabs.Screen name="index" options={{ title: 'Trợ lý' }} />
       <Tabs.Screen name="tasks" options={{ title: 'Việc' }} />
       <Tabs.Screen name="calendar" options={{ title: 'Lịch' }} />
