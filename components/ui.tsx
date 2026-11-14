@@ -285,7 +285,7 @@ export function TaskCard({
       onLayout={(event) => {
         cardWidth.current = event.nativeEvent.layout.width;
       }}
-      style={[overlap && { marginTop: -24 }, { opacity: exitOpacity, transform: [{ translateX: exitX }] }]}>
+      style={[overlap && { marginTop: 10 }, { opacity: exitOpacity, transform: [{ translateX: exitX }] }]}>
       <Animated.View style={{ opacity: entryOpacity, transform: [{ translateY: entryY }] }}>
       <MotionPressable
         onLongPress={onLongPress}
@@ -297,18 +297,22 @@ export function TaskCard({
           </Text>
           <Text style={{ fontFamily: FONT.semibold, fontSize: 15, color: BRAND.ink }}>{timeLabel(task.due_at, now)}</Text>
         </View>
-        <Text style={{ fontFamily: FONT.regular, fontSize: 13, color: BRAND.ink, paddingRight: 56 }} numberOfLines={2}>
+        <Text style={{ fontFamily: FONT.regular, fontSize: 13, color: BRAND.ink }} numberOfLines={2}>
           {meta}
           {task.location ? ` · ${task.location}` : ''}
           {task.updated_from.length ? ' · đã cập nhật' : ''}
         </Text>
         {task.note ? (
-          <Text style={{ fontFamily: FONT.regular, fontSize: 12, color: BRAND.ink, fontStyle: 'italic' }}>{task.note}</Text>
+          <Text style={{ fontFamily: FONT.regular, fontSize: 12, color: BRAND.ink, fontStyle: 'italic' }} numberOfLines={2}>
+            {task.note}
+          </Text>
         ) : null}
-        <View pointerEvents="none" style={s.character}>
-          <CategoryCharacter category={task.category} cardBg={bg} size={72} />
-        </View>
-        {onDone && (
+        {/* Dòng cuối: nhân vật theo loại việc + nút xong, nằm dưới chữ nên không bao giờ che nội dung. */}
+        <View style={s.footer}>
+          <View pointerEvents="none" style={s.character}>
+            <CategoryCharacter category={task.category} cardBg={bg} size={60} />
+          </View>
+          {onDone && (
           <Animated.View style={[s.done, { backgroundColor: doneFeedback ? '#1A9E6A' : BRAND.ink, transform: [{ scale: tickScale }] }]}>
             <MotionPressable
               onPress={complete}
@@ -320,7 +324,8 @@ export function TaskCard({
               <Icon name="check" color="#FFFFFF" size={20} stroke={2.6} />
             </MotionPressable>
           </Animated.View>
-        )}
+          )}
+        </View>
       </MotionPressable>
       </Animated.View>
     </Animated.View>
@@ -340,19 +345,16 @@ const s = StyleSheet.create({
   dot: { width: 10, height: 10, borderRadius: 5, marginTop: 6 },
   error: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 12, borderRadius: RADIUS.tile, marginBottom: 10 },
   taskCard: {
-    minHeight: 128,
     borderRadius: RADIUS.card,
     paddingTop: 22,
     paddingHorizontal: 18,
-    paddingBottom: 18,
+    paddingBottom: 14,
     overflow: 'hidden',
     gap: 4,
   },
-  character: { position: 'absolute', left: '40%', bottom: -10, opacity: 0.95 },
+  footer: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', minHeight: 44, marginTop: 6 },
+  character: { marginBottom: -22, opacity: 0.95 },
   done: {
-    position: 'absolute',
-    right: 16,
-    bottom: 16,
     width: 44,
     height: 44,
     borderRadius: 22,

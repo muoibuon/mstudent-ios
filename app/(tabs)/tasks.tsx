@@ -13,6 +13,7 @@ import { MotionScreen } from '@/components/MotionEntrance';
 import { MotionPressable } from '@/components/MotionPressable';
 import { Display, ErrorBanner, Muted, T, TaskCard } from '@/components/ui';
 import { BRAND, FONT, SCREEN_PAD, TAB_BAR_SPACE, usePalette } from '@/constants/theme';
+import { cleanDigest } from '@/lib/digest';
 import { api } from '@/lib/api';
 import { BUCKET_ORDER, bucketOf } from '@/lib/dates';
 import { sortInvites } from '@/lib/events';
@@ -159,7 +160,7 @@ function TasksContent() {
                 </View>
                 {showDigest && (
                   <T style={{ fontSize: 14, lineHeight: 20 }} color={BRAND.mintInkDeep}>
-                    {digest}
+                    {cleanDigest(digest)}
                   </T>
                 )}
               </View>
