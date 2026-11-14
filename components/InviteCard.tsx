@@ -43,7 +43,7 @@ export function InviteCard({
       <View style={s.pills}>
         {task.fit_level && <Pill dark label={FIT_LABEL[task.fit_level]} />}
         {task.mandatory && <Pill label="Bắt buộc" />}
-        {task.fit_mode === 'offline' && <Pill label="Bộ luật (offline)" />}
+        {task.fit_mode === 'offline' && <Pill label="Không dùng AI" />}
       </View>
       <Text style={[TYPE.title, { color: BRAND.ink }]} numberOfLines={3}>
         {task.title}

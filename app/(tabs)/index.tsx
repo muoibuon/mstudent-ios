@@ -8,18 +8,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/Icon';
 import { Meme, MemeAvatar } from '@/components/Mascot';
-import { Chip, Display, ErrorBanner, ModePill, T, timeLabel } from '@/components/ui';
+import { Chip, Display, ErrorBanner, OfflineNotice, T, timeLabel } from '@/components/ui';
 import { BRAND, FONT, SCREEN_PAD, TAB_BAR_SPACE, usePalette } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { bucketOf } from '@/lib/dates';
 import { useStore } from '@/lib/store';
-import type { ChatTurn, ToolCall } from '@/lib/types';
+import type { ChatTurn } from '@/lib/types';
 
 interface Msg {
   id: string;
   role: 'user' | 'assistant';
   text: string;
-  calls?: ToolCall[];
   mode?: string;
 }
 
@@ -62,7 +61,7 @@ export default function ChatScreen() {
     setBusy(true);
     try {
       const r = await api.chat(message, history);
-      setMsgs((m) => [...m, { id: `a${Date.now()}`, role: 'assistant', text: r.reply, calls: r.tool_calls, mode: r.mode }]);
+      setMsgs((m) => [...m, { id: `a${Date.now()}`, role: 'assistant', text: r.reply, mode: r.mode }]);
       if (r.tool_calls.some((t) => t.tool !== 'list_tasks')) refresh();
     } catch (e) {
       setMsgs((m) => [...m, { id: `e${Date.now()}`, role: 'assistant', text: `Lỗi: ${(e as Error).message}` }]);
@@ -83,7 +82,7 @@ export default function ChatScreen() {
           <T v="small" color={c.muted} style={{ textTransform: 'capitalize' }}>
             {dateLabel}
           </T>
-          {health && <ModePill live={health.mode === 'llm'} />}
+          {health?.mode === 'offline' && <OfflineNotice />}
         </View>
         <T v="h1" accessibilityRole="header">
           {greeting(now)}
@@ -159,7 +158,6 @@ export default function ChatScreen() {
 
 function Bubble({ msg }: { msg: Msg }) {
   const c = usePalette();
-  const [open, setOpen] = useState(false);
   if (msg.role === 'user') {
     return (
       <View style={[styles.bubble, styles.mine]}>
@@ -174,24 +172,9 @@ function Bubble({ msg }: { msg: Msg }) {
         <T>{msg.text}</T>
         {msg.mode === 'offline' && (
           <View style={{ marginTop: 8 }}>
-            <ModePill live={false} />
+            <OfflineNotice />
           </View>
         )}
-        {!!msg.calls?.length && (
-          <Pressable onPress={() => setOpen((o) => !o)} accessibilityRole="button" style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 }}>
-            <Icon name="tool" color={c.muted} size={14} />
-            <T style={{ fontSize: 12 }} color={c.muted}>
-              {msg.calls.length} lần gọi tool · {msg.mode}
-              {open ? ' ▾' : ' ▸'}
-            </T>
-          </Pressable>
-        )}
-        {open &&
-          msg.calls?.map((t, i) => (
-            <T key={i} style={[styles.code, { backgroundColor: c.bg }]}>
-              {`${t.tool}(${JSON.stringify(t.args)})\n→ ${t.result}`}
-            </T>
-          ))}
       </View>
     </View>
   );
@@ -243,13 +226,6 @@ const styles = StyleSheet.create({
   bubble: { paddingVertical: 12, paddingHorizontal: 14, borderRadius: 20 },
   mine: { alignSelf: 'flex-end', maxWidth: '80%', backgroundColor: BRAND.cobalt, borderBottomRightRadius: 6 },
   theirs: { borderBottomLeftRadius: 6, flexShrink: 1 },
-  code: {
-    marginTop: 6,
-    padding: 8,
-    borderRadius: 10,
-    fontSize: 12,
-    fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' }),
-  },
   inputRow: { flexDirection: 'row', gap: 8, alignItems: 'flex-end' },
   input: { flex: 1, minHeight: 52, maxHeight: 120, borderRadius: 26, paddingHorizontal: 18, paddingTop: 15, paddingBottom: 15, fontSize: 15 },
   send: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },

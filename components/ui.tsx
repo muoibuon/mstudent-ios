@@ -154,13 +154,12 @@ export function Dot({ priority }: { priority: Task['priority'] }) {
   return <View style={[s.dot, { backgroundColor: PRIORITY_BG[priority] }]} />;
 }
 
-/** "AI trực tiếp" (bạc hà, chấm xanh) hoặc "Bộ luật (offline)" (vàng) — kết quả luật không được gọi là AI. */
-export function ModePill({ live, label }: { live: boolean; label?: string }) {
+/** Báo rõ khi kết quả đến từ quy tắc cơ bản thay vì AI. */
+export function OfflineNotice() {
   return (
-    <View style={[s.pill, { backgroundColor: live ? BRAND.mint : BRAND.amber }]} accessibilityLabel={label ?? (live ? 'AI trực tiếp' : 'Bộ luật offline')}>
-      {live && <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#1A9E6A' }} />}
-      <Text style={{ color: live ? BRAND.mintInk : BRAND.amberInk, fontSize: 13, fontFamily: FONT.semibold }}>
-        {label ?? (live ? 'AI trực tiếp' : 'Bộ luật (offline)')}
+    <View style={[s.pill, { backgroundColor: BRAND.amber }]} accessibilityLabel="Không dùng AI">
+      <Text style={{ color: BRAND.amberInk, fontSize: 13, fontFamily: FONT.semibold }}>
+        Không dùng AI
       </Text>
     </View>
   );
@@ -193,20 +192,18 @@ export function timeLabel(due: string | null, now: Date): string {
 
 /**
  * Thẻ việc: nền theo ưu tiên (giữ nguyên ở chế độ tối), chữ mực, nhân vật theo loại việc ló ở góc dưới,
- * nút tròn đen "xong" ở góc phải. `overlap` để xếp chồng thẻ sau lên thẻ trước (-24).
+ * nút tròn đen "xong" ở góc phải. Nội dung dài được hiển thị trọn vẹn và có khoảng cách giữa các thẻ.
  */
 export function TaskCard({
   task,
   now,
   onDone,
   onLongPress,
-  overlap,
 }: {
   task: Task;
   now: Date;
   onDone?: () => void;
   onLongPress?: () => void;
-  overlap?: boolean;
 }) {
   const bg = PRIORITY_BG[task.priority];
   const meta = [
@@ -219,14 +216,14 @@ export function TaskCard({
     <Pressable
       onLongPress={onLongPress}
       accessibilityHint={onLongPress ? 'Nhấn giữ để đổi hạn' : undefined}
-      style={[s.taskCard, { backgroundColor: bg }, overlap && { marginTop: -24 }]}>
+      style={[s.taskCard, { backgroundColor: bg }]}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
-        <Text style={[TYPE.title, { color: BRAND.ink, flex: 1 }]} numberOfLines={2}>
+        <Text style={[TYPE.title, { color: BRAND.ink, flex: 1 }]}>
           {task.title}
         </Text>
         <Text style={{ fontFamily: FONT.semibold, fontSize: 15, color: BRAND.ink }}>{timeLabel(task.due_at, now)}</Text>
       </View>
-      <Text style={{ fontFamily: FONT.regular, fontSize: 13, color: BRAND.ink, paddingRight: 56 }} numberOfLines={2}>
+      <Text style={{ fontFamily: FONT.regular, fontSize: 13, color: BRAND.ink, paddingRight: 56 }}>
         {meta}
         {task.location ? ` · ${task.location}` : ''}
         {task.updated_from.length ? ' · đã cập nhật' : ''}
@@ -264,11 +261,12 @@ const s = StyleSheet.create({
   dot: { width: 10, height: 10, borderRadius: 5, marginTop: 6 },
   error: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 12, borderRadius: RADIUS.tile, marginBottom: 10 },
   taskCard: {
-    minHeight: 128,
+    minHeight: 152,
+    marginBottom: 12,
     borderRadius: RADIUS.card,
     paddingTop: 22,
     paddingHorizontal: 18,
-    paddingBottom: 18,
+    paddingBottom: 72,
     overflow: 'hidden',
     gap: 4,
   },

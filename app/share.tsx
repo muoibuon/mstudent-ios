@@ -8,7 +8,7 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/Icon';
-import { Button, Chip, Display, ModePill, Muted, T, TaskCard } from '@/components/ui';
+import { Button, Chip, Display, Muted, OfflineNotice, T, TaskCard } from '@/components/ui';
 import { BRAND, FONT, SCREEN_PAD, usePalette } from '@/constants/theme';
 import { api } from '@/lib/api';
 import { parseShareLink } from '@/lib/sharelink';
@@ -21,8 +21,6 @@ const SOURCES: { key: Source; label: string }[] = [
   { key: 'lms', label: 'LMS' },
   { key: 'manual', label: 'Khác' },
 ];
-
-const AGENT_LABEL: Record<string, string> = { Triage: 'Lọc tin', Extractor: 'Trích việc', Planner: 'Lên lịch' };
 
 export default function ShareScreen() {
   const c = usePalette();
@@ -112,7 +110,7 @@ export default function ShareScreen() {
             <Chip key={s.key} label={s.label} active={source === s.key} onPress={() => setSource(s.key)} />
           ))}
         </View>
-        <Button label="Phân tích bằng AI" busy={busy} disabled={!text.trim()} onPress={analyze} />
+        <Button label="Tìm việc trong thông báo" busy={busy} disabled={!text.trim()} onPress={analyze} />
         {err && <T v="small" color={c.bad}>{err}</T>}
 
         {result && (
@@ -124,29 +122,14 @@ export default function ShareScreen() {
                   {status}
                 </T>
               </View>
-              <ModePill live={result.mode === 'llm'} label={result.mode === 'cache' ? 'Không chạy lại agent' : undefined} />
+              {result.mode === 'offline' && <OfflineNotice />}
             </View>
             {tasks.map((t, i) => (
-              <TaskCard key={`${t.id}-${i}`} task={t} now={now} overlap={i > 0} />
+              <TaskCard key={`${t.id}-${i}`} task={t} now={now} />
             ))}
             {!tasks.length && <Muted>{result.reason}</Muted>}
             {result.updated.length > 0 && <Muted>Đã cập nhật việc có sẵn thay vì tạo trùng.</Muted>}
 
-            <T v="label" color={c.muted} style={{ marginTop: 4 }}>
-              CÁC AGENT ĐÃ CHẠY · {result.mode.toUpperCase()}
-            </T>
-            <View style={{ flexDirection: 'row', gap: 6 }}>
-              {result.trace.map((s, i) => (
-                <View key={i} style={[styles.agent, { backgroundColor: s.error ? BRAND.amber : BRAND.mint }]}>
-                  <T style={{ fontFamily: FONT.semibold, fontSize: 12 }} color={BRAND.ink}>
-                    {AGENT_LABEL[s.agent] ?? s.agent}
-                  </T>
-                  <T style={{ fontSize: 12 }} color={s.error ? BRAND.amberInk : BRAND.mintInk}>
-                    {s.error ? 'lỗi → luật' : `${(s.ms / 1000).toFixed(1).replace('.', ',')} giây`}
-                  </T>
-                </View>
-              ))}
-            </View>
           </View>
         )}
 
@@ -165,5 +148,4 @@ const styles = StyleSheet.create({
   input: { minHeight: 110, borderRadius: 20, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 14, fontSize: 15, lineHeight: 22, textAlignVertical: 'top' },
   sources: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   status: { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
-  agent: { flex: 1, borderRadius: 14, paddingVertical: 8, paddingHorizontal: 10, gap: 2 },
 });

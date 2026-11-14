@@ -90,8 +90,8 @@ export default function CalendarScreen() {
         </View>
         {dayTasks.length ? (
           <>
-            {dayTasks.map((t, i) => (
-              <TaskCard key={t.id} task={t} now={now} overlap={i > 0} onDone={() => markDone(t.id)} onLongPress={() => setMoving(t)} />
+            {dayTasks.map((t) => (
+              <TaskCard key={t.id} task={t} now={now} onDone={() => markDone(t.id)} onLongPress={() => setMoving(t)} />
             ))}
             <Muted style={{ marginTop: 12 }}>Nhấn giữ một việc để dời sang ngày khác.</Muted>
           </>

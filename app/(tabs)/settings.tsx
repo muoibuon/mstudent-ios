@@ -1,4 +1,4 @@
-// Tab Cài đặt: tài khoản, kiểm tra AI, Gmail, thống kê, nhắc việc, dữ liệu demo.
+// Tab Cài đặt: tài khoản, Gmail, thống kê, nhắc việc, dữ liệu demo.
 
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -13,15 +13,14 @@ import { gmailGrantErrorMessage } from '@/lib/errors';
 import { googleAvailable, googleGrantGmail } from '@/lib/google';
 import { scheduledCount, sendTest, supported as notifSupported } from '@/lib/notifications';
 import { useStore } from '@/lib/store';
-import type { AiCheck, GmailStatus, PublicConfig, Stats } from '@/lib/types';
+import type { GmailStatus, PublicConfig, Stats } from '@/lib/types';
 
 export default function SettingsScreen() {
   const c = usePalette();
   const insets = useSafeAreaInsets();
-  const { user, settings, updateSettings, health, error, refresh, scheduled, signOut, reloadUser, tasks } = useStore();
+  const { user, settings, updateSettings, refresh, scheduled, signOut, reloadUser, tasks } = useStore();
   const [busy, setBusy] = useState<string | null>(null);
   const [pending, setPending] = useState<number | null>(null);
-  const [ai, setAi] = useState<AiCheck | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [gmail, setGmail] = useState<GmailStatus | null>(null);
   const [cfg, setCfg] = useState<PublicConfig | null>(null);
@@ -102,37 +101,6 @@ export default function SettingsScreen() {
       </View>
 
       <View style={{ paddingHorizontal: SCREEN_PAD, gap: 14, marginTop: 16 }}>
-        <Card tone={BRAND.mint}>
-          <Display size={22} color={BRAND.mintInk}>
-            AI
-          </Display>
-          {health ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 }}>
-              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: health.mode === 'llm' ? '#1A9E6A' : BRAND.amberInk }} />
-              <T style={{ fontFamily: FONT.semibold }} color={BRAND.mintInkDeep}>
-                {health.mode !== 'llm'
-                  ? 'Bộ luật (offline) — AI chưa bật'
-                  : health.filter_model && health.filter_model !== health.model
-                    ? `Trực tiếp · lọc: ${health.filter_model} · trả lời: ${health.model}`
-                    : `Trực tiếp · ${health.model}`}
-              </T>
-            </View>
-          ) : (
-            <T color={BRAND.mintInkDeep}>{error ?? 'Chưa kết nối máy chủ'}</T>
-          )}
-          <T v="small" color={BRAND.mintInk} style={{ marginTop: 4 }}>
-            Máy chủ: {settings.baseUrl.replace(/^https?:\/\//, '')}
-          </T>
-          <View style={{ marginTop: 12, alignSelf: 'flex-start' }}>
-            <Button small variant="dark" label="Kiểm tra AI ngay" busy={busy === 'ai'} onPress={() => run('ai', async () => setAi(await api.aiCheck()))} />
-          </View>
-          {ai && (
-            <T v="small" color={ai.ok ? BRAND.mintInkDeep : c.bad} style={{ marginTop: 8 }}>
-              {ai.ok ? `AI trả lời sau ${ai.latency_ms} ms (${ai.model})` : (ai.error ?? 'AI trả kết quả không đúng')}
-            </T>
-          )}
-        </Card>
-
         {stats && (
           <View style={{ gap: 8 }}>
             <T v="label" color={c.muted}>
