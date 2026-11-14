@@ -19,5 +19,7 @@ xcrun devicectl device install app --device <mã thiết bị> ios/build/Build/P
 Giới hạn của Apple ID miễn phí: không có thông báo đẩy (app dùng làm mới nền + nhắc việc trên máy), không có share
 extension (dán thông báo hoặc dùng Phím tắt), bản cài hết hạn sau 7 ngày — build lại để gia hạn.
 
-Google Sign-In trên iOS cần `GOOGLE_IOS_URL_SCHEME=com.googleusercontent.apps.<iOS client ID đảo ngược>` khi prebuild —
-xem [GOOGLE_CLOUD_SETUP.md](https://github.com/muoibuon/mstudent-backend/blob/master/docs/GOOGLE_CLOUD_SETUP.md).
+Google Sign-In đã có URL scheme mặc định của MStudent. Nếu đổi Google iOS OAuth client, đặt
+`GOOGLE_IOS_URL_SCHEME=com.googleusercontent.apps.<iOS client ID đảo ngược>` **khi prebuild** và kiểm tra
+giá trị này khớp `ios_client_id` từ máy chủ — xem
+[GOOGLE_CLOUD_SETUP.md](https://github.com/muoibuon/mstudent-backend/blob/master/docs/GOOGLE_CLOUD_SETUP.md).

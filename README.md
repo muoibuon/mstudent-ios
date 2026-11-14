@@ -32,7 +32,7 @@ Biến môi trường khi build:
 | Biến | Ý nghĩa |
 |---|---|
 | `EXPO_PUBLIC_API_URL` | Địa chỉ server điền sẵn ở màn hình đăng nhập (tuỳ chọn) |
-| `GOOGLE_IOS_URL_SCHEME` | Bắt buộc cho Google Sign-In trên iOS: `com.googleusercontent.apps.<iOS client ID đảo ngược>` |
+| `GOOGLE_IOS_URL_SCHEME` | Tuỳ chọn khi thay Google iOS OAuth client. Mặc định đã dùng scheme của MStudent; nếu ghi đè, phải khớp `ios_client_id` máy chủ trả về |
 | `MSTUDENT_HTTPS_ONLY=1` | Cấm HTTP thường. Mặc định cho phép HTTP **trong mạng nội bộ** để gọi backend localhost |
 
 Không commit `ios/` và `android/` (sinh ra bởi `expo prebuild`). Bundle id / package: `vn.muoibuon.mstudent`.
