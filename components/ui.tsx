@@ -1,10 +1,12 @@
 // Thành phần dùng chung theo MStudent UI Kit v1: không viền xám, tách khối bằng màu nền, bo 28/20/16/999,
 // chữ Lexend (Baloo 2 cho tiêu đề IN HOA), thẻ việc màu theo ưu tiên + nhân vật theo loại việc.
 
-import type { ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import * as Haptics from 'expo-haptics';
 import {
   ActivityIndicator,
-  Pressable,
+  Animated,
+  Easing,
   StyleSheet,
   Text,
   View,
@@ -16,10 +18,12 @@ import {
 
 import { CategoryCharacter } from '@/components/Mascot';
 import { Icon } from '@/components/Icon';
+import { MotionPressable } from '@/components/MotionPressable';
 import { BRAND, FONT, PRIORITY_BG, PRIORITY_LABEL, RADIUS, TYPE, usePalette } from '@/constants/theme';
 import { relativeDay } from '@/lib/dates';
 import { taskSourcesLabel } from '@/lib/sources';
 import { CATEGORY_LABEL, type Task } from '@/lib/types';
+import { useReducedMotion } from '@/lib/useReducedMotion';
 
 type Variant = keyof typeof TYPE;
 
@@ -91,17 +95,17 @@ export function Button({
   };
   const l = look[variant];
   return (
-    <Pressable
+    <MotionPressable
       accessibilityRole="button"
       accessibilityLabel={label}
       onPress={onPress}
       disabled={disabled || busy}
-      style={({ pressed }) => [
+      style={[
         s.btn,
         small && s.btnSmall,
         { backgroundColor: l.bg },
         l.border ? { borderWidth: 2, borderColor: l.border } : null,
-        (pressed || disabled) && { opacity: 0.55 },
+        (disabled || busy) && { opacity: 0.55 },
       ]}>
       {busy ? (
         <ActivityIndicator color={l.fg} />
@@ -111,7 +115,7 @@ export function Button({
           <Text style={{ fontFamily: FONT.semibold, fontSize: small ? 13 : 16, color: l.fg }}>{label}</Text>
         </View>
       )}
-    </Pressable>
+    </MotionPressable>
   );
 }
 
@@ -121,13 +125,13 @@ export function Chip({ label, onPress, active, tone }: { label: string; onPress?
   const bg = active ? c.active : (tone ?? c.soft);
   const fg = active ? (c.active === BRAND.ink ? '#FFFFFF' : BRAND.ink) : tone ? BRAND.ink : c.text;
   return (
-    <Pressable
+    <MotionPressable
       onPress={onPress}
       style={[s.chip, { backgroundColor: bg }]}
       accessibilityRole={onPress ? 'button' : 'text'}
       accessibilityState={onPress ? { selected: !!active } : undefined}>
       <Text style={{ color: fg, fontSize: 13, fontFamily: active ? FONT.semibold : FONT.medium }}>{label}</Text>
-    </Pressable>
+    </MotionPressable>
   );
 }
 
@@ -154,13 +158,12 @@ export function Dot({ priority }: { priority: Task['priority'] }) {
   return <View style={[s.dot, { backgroundColor: PRIORITY_BG[priority] }]} />;
 }
 
-/** "AI trực tiếp" (bạc hà, chấm xanh) hoặc "Bộ luật (offline)" (vàng) — kết quả luật không được gọi là AI. */
-export function ModePill({ live, label }: { live: boolean; label?: string }) {
+/** Báo rõ khi kết quả đến từ quy tắc cơ bản thay vì AI. */
+export function OfflineNotice() {
   return (
-    <View style={[s.pill, { backgroundColor: live ? BRAND.mint : BRAND.amber }]} accessibilityLabel={label ?? (live ? 'AI trực tiếp' : 'Bộ luật offline')}>
-      {live && <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#1A9E6A' }} />}
-      <Text style={{ color: live ? BRAND.mintInk : BRAND.amberInk, fontSize: 13, fontFamily: FONT.semibold }}>
-        {label ?? (live ? 'AI trực tiếp' : 'Bộ luật (offline)')}
+    <View style={[s.pill, { backgroundColor: BRAND.amber }]} accessibilityLabel="Không dùng AI">
+      <Text style={{ color: BRAND.amberInk, fontSize: 13, fontFamily: FONT.semibold }}>
+        Không dùng AI
       </Text>
     </View>
   );
@@ -193,21 +196,54 @@ export function timeLabel(due: string | null, now: Date): string {
 
 /**
  * Thẻ việc: nền theo ưu tiên (giữ nguyên ở chế độ tối), chữ mực, nhân vật theo loại việc ló ở góc dưới,
- * nút tròn đen "xong" ở góc phải. `overlap` để xếp chồng thẻ sau lên thẻ trước (-24).
+ * nút tròn đen "xong" ở góc phải. Nội dung dài được hiển thị trọn vẹn và có khoảng cách giữa các thẻ.
  */
 export function TaskCard({
   task,
   now,
   onDone,
   onLongPress,
-  overlap,
+  entranceDelay = 0,
 }: {
   task: Task;
   now: Date;
-  onDone?: () => void;
+  onDone?: () => void | Promise<void>;
   onLongPress?: () => void;
-  overlap?: boolean;
+  entranceDelay?: number;
 }) {
+  const reducedMotion = useReducedMotion();
+  const [initialDelay] = useState(entranceDelay);
+  const [entryY] = useState(() => new Animated.Value(reducedMotion ? 0 : 16));
+  const [entryOpacity] = useState(() => new Animated.Value(reducedMotion ? 1 : 0));
+  const [tickScale] = useState(() => new Animated.Value(1));
+  const [exitX] = useState(() => new Animated.Value(0));
+  const [exitOpacity] = useState(() => new Animated.Value(1));
+  const [doneFeedback, setDoneFeedback] = useState(false);
+  const cardWidth = useRef(400);
+  const finishing = useRef(false);
+  const entered = useRef(false);
+
+  useEffect(() => {
+    if (reducedMotion) {
+      entryY.stopAnimation();
+      entryOpacity.stopAnimation();
+      entryY.setValue(0);
+      entryOpacity.setValue(1);
+      entered.current = true;
+      return;
+    }
+    if (entered.current) return;
+    entered.current = true;
+    const animation = Animated.sequence([
+      Animated.delay(initialDelay),
+      Animated.parallel([
+        Animated.timing(entryY, { toValue: 0, duration: 220, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+        Animated.timing(entryOpacity, { toValue: 1, duration: 220, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      ]),
+    ]);
+    animation.start();
+    return () => animation.stop();
+  }, [reducedMotion, initialDelay, entryY, entryOpacity]);
   const bg = PRIORITY_BG[task.priority];
   const meta = [
     PRIORITY_LABEL[task.priority],
@@ -215,39 +251,76 @@ export function TaskCard({
     task.due_at ? relativeDay(task.due_at, now) : 'Không có hạn',
     taskSourcesLabel(task.sources ?? [], task.source),
   ].join(' · ');
+
+  const commitDone = () => {
+    try {
+      Promise.resolve(onDone?.()).catch(() => {});
+    } catch {
+      // Lần tải mới của store sẽ khôi phục thẻ nếu máy chủ từ chối.
+    }
+  };
+
+  const complete = () => {
+    if (!onDone || finishing.current) return;
+    finishing.current = true;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    if (reducedMotion) {
+      commitDone();
+      return;
+    }
+    setDoneFeedback(true);
+    Animated.spring(tickScale, { toValue: 1.25, damping: 12, stiffness: 220, useNativeDriver: true }).start(() => {
+      Animated.parallel([
+        Animated.timing(exitX, { toValue: -cardWidth.current - 24, duration: 280, easing: Easing.in(Easing.cubic), useNativeDriver: true }),
+        Animated.timing(exitOpacity, { toValue: 0, duration: 280, easing: Easing.in(Easing.cubic), useNativeDriver: true }),
+      ]).start(commitDone);
+    });
+  };
+
   return (
-    <Pressable
-      onLongPress={onLongPress}
-      accessibilityHint={onLongPress ? 'Nhấn giữ để đổi hạn' : undefined}
-      style={[s.taskCard, { backgroundColor: bg }, overlap && { marginTop: -24 }]}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
-        <Text style={[TYPE.title, { color: BRAND.ink, flex: 1 }]} numberOfLines={2}>
-          {task.title}
+    <Animated.View
+      onLayout={(event) => {
+        cardWidth.current = event.nativeEvent.layout.width;
+      }}
+      style={{ marginBottom: 12, opacity: exitOpacity, transform: [{ translateX: exitX }] }}>
+      <Animated.View style={{ opacity: entryOpacity, transform: [{ translateY: entryY }] }}>
+      <MotionPressable
+        onLongPress={onLongPress}
+        accessibilityHint={onLongPress ? 'Nhấn giữ để đổi hạn' : undefined}
+        style={[s.taskCard, { backgroundColor: bg }]}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
+          <Text style={[TYPE.title, { color: BRAND.ink, flex: 1 }]}>
+            {task.title}
+          </Text>
+          <Text style={{ fontFamily: FONT.semibold, fontSize: 15, color: BRAND.ink }}>{timeLabel(task.due_at, now)}</Text>
+        </View>
+        <Text style={{ fontFamily: FONT.regular, fontSize: 13, color: BRAND.ink, paddingRight: 56 }}>
+          {meta}
+          {task.location ? ` · ${task.location}` : ''}
+          {task.updated_from.length ? ' · đã cập nhật' : ''}
         </Text>
-        <Text style={{ fontFamily: FONT.semibold, fontSize: 15, color: BRAND.ink }}>{timeLabel(task.due_at, now)}</Text>
-      </View>
-      <Text style={{ fontFamily: FONT.regular, fontSize: 13, color: BRAND.ink, paddingRight: 56 }} numberOfLines={2}>
-        {meta}
-        {task.location ? ` · ${task.location}` : ''}
-        {task.updated_from.length ? ' · đã cập nhật' : ''}
-      </Text>
-      {task.note ? (
-        <Text style={{ fontFamily: FONT.regular, fontSize: 12, color: BRAND.ink, fontStyle: 'italic' }}>{task.note}</Text>
-      ) : null}
-      <View pointerEvents="none" style={s.character}>
-        <CategoryCharacter category={task.category} cardBg={bg} size={72} />
-      </View>
-      {onDone && (
-        <Pressable
-          onPress={onDone}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel={`Đánh dấu xong: ${task.title}`}
-          style={s.done}>
-          <Icon name="check" color="#FFFFFF" size={20} stroke={2.6} />
-        </Pressable>
-      )}
-    </Pressable>
+        {task.note ? (
+          <Text style={{ fontFamily: FONT.regular, fontSize: 12, color: BRAND.ink, fontStyle: 'italic' }}>{task.note}</Text>
+        ) : null}
+        <View pointerEvents="none" style={s.character}>
+          <CategoryCharacter category={task.category} cardBg={bg} size={72} />
+        </View>
+        {onDone && (
+          <Animated.View style={[s.done, { backgroundColor: doneFeedback ? '#1A9E6A' : BRAND.ink, transform: [{ scale: tickScale }] }]}>
+            <MotionPressable
+              onPress={complete}
+              disabled={doneFeedback}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={`Đánh dấu xong: ${task.title}`}
+              style={s.doneHit}>
+              <Icon name="check" color="#FFFFFF" size={20} stroke={2.6} />
+            </MotionPressable>
+          </Animated.View>
+        )}
+      </MotionPressable>
+      </Animated.View>
+    </Animated.View>
   );
 }
 
@@ -264,11 +337,11 @@ const s = StyleSheet.create({
   dot: { width: 10, height: 10, borderRadius: 5, marginTop: 6 },
   error: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 12, borderRadius: RADIUS.tile, marginBottom: 10 },
   taskCard: {
-    minHeight: 128,
+    minHeight: 152,
     borderRadius: RADIUS.card,
     paddingTop: 22,
     paddingHorizontal: 18,
-    paddingBottom: 18,
+    paddingBottom: 72,
     overflow: 'hidden',
     gap: 4,
   },
@@ -284,4 +357,5 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  doneHit: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
 });

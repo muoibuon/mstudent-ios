@@ -1,11 +1,13 @@
-// Tab Cài đặt: tài khoản, kiểm tra AI, Gmail, thống kê, nhắc việc, dữ liệu demo.
+// Tab Cài đặt: tài khoản, Gmail, thống kê, nhắc việc, dữ liệu demo.
 
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Platform, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AppIconPicker } from '@/components/AppIconPicker';
 import { Button, Card, Display, Muted, T } from '@/components/ui';
+import { MotionScreen } from '@/components/MotionEntrance';
 import { BRAND, FONT, SCREEN_PAD, TAB_BAR_SPACE, usePalette } from '@/constants/theme';
 import { api, authApi } from '@/lib/api';
 import { fmtDue } from '@/lib/dates';
@@ -13,15 +15,18 @@ import { gmailGrantErrorMessage } from '@/lib/errors';
 import { googleAvailable, googleGrantGmail } from '@/lib/google';
 import { scheduledCount, sendTest, supported as notifSupported } from '@/lib/notifications';
 import { useStore } from '@/lib/store';
-import type { AiCheck, GmailStatus, PublicConfig, Stats } from '@/lib/types';
+import type { GmailStatus, PublicConfig, Stats } from '@/lib/types';
 
 export default function SettingsScreen() {
+  return <MotionScreen><SettingsContent /></MotionScreen>;
+}
+
+function SettingsContent() {
   const c = usePalette();
   const insets = useSafeAreaInsets();
-  const { user, settings, updateSettings, health, error, refresh, scheduled, signOut, reloadUser, tasks } = useStore();
+  const { user, settings, updateSettings, refresh, scheduled, signOut, reloadUser, tasks } = useStore();
   const [busy, setBusy] = useState<string | null>(null);
   const [pending, setPending] = useState<number | null>(null);
-  const [ai, setAi] = useState<AiCheck | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [gmail, setGmail] = useState<GmailStatus | null>(null);
   const [cfg, setCfg] = useState<PublicConfig | null>(null);
@@ -81,7 +86,7 @@ export default function SettingsScreen() {
 
   return (
     <ScrollView
-      style={{ backgroundColor: c.bg }}
+      style={{ flex: 1, backgroundColor: c.bg }}
       contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE + insets.bottom + 8 }}
       keyboardShouldPersistTaps="handled">
       <View style={[styles.hero, { paddingTop: insets.top + 16 }]}>
@@ -102,37 +107,7 @@ export default function SettingsScreen() {
       </View>
 
       <View style={{ paddingHorizontal: SCREEN_PAD, gap: 14, marginTop: 16 }}>
-        <Card tone={BRAND.mint}>
-          <Display size={22} color={BRAND.mintInk}>
-            AI
-          </Display>
-          {health ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 }}>
-              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: health.mode === 'llm' ? '#1A9E6A' : BRAND.amberInk }} />
-              <T style={{ fontFamily: FONT.semibold }} color={BRAND.mintInkDeep}>
-                {health.mode !== 'llm'
-                  ? 'Bộ luật (offline) — AI chưa bật'
-                  : health.filter_model && health.filter_model !== health.model
-                    ? `Trực tiếp · lọc: ${health.filter_model} · trả lời: ${health.model}`
-                    : `Trực tiếp · ${health.model}`}
-              </T>
-            </View>
-          ) : (
-            <T color={BRAND.mintInkDeep}>{error ?? 'Chưa kết nối máy chủ'}</T>
-          )}
-          <T v="small" color={BRAND.mintInk} style={{ marginTop: 4 }}>
-            Máy chủ: {settings.baseUrl.replace(/^https?:\/\//, '')}
-          </T>
-          <View style={{ marginTop: 12, alignSelf: 'flex-start' }}>
-            <Button small variant="dark" label="Kiểm tra AI ngay" busy={busy === 'ai'} onPress={() => run('ai', async () => setAi(await api.aiCheck()))} />
-          </View>
-          {ai && (
-            <T v="small" color={ai.ok ? BRAND.mintInkDeep : c.bad} style={{ marginTop: 8 }}>
-              {ai.ok ? `AI trả lời sau ${ai.latency_ms} ms (${ai.model})` : (ai.error ?? 'AI trả kết quả không đúng')}
-            </T>
-          )}
-        </Card>
-
+        <AppIconPicker />
         {stats && (
           <View style={{ gap: 8 }}>
             <T v="label" color={c.muted}>
@@ -144,7 +119,6 @@ export default function SettingsScreen() {
               <Stat value={stats.tasks_created} label="việc tìm được" tone={BRAND.periwinkle} />
               <Stat value={stats.changes_caught} label="lần đổi hạn bắt kịp" tone={BRAND.mint} />
               <Stat value={stats.tasks_done} label="việc đã xong" />
-              <Stat value={stats.ai_runs} label="lượt AI chạy" />
             </View>
           </View>
         )}
@@ -331,7 +305,7 @@ function Stat({ value, label, tone }: { value: number; label: string; tone?: str
   const onTone = !!tone;
   return (
     <View style={[styles.stat, { backgroundColor: tone ?? c.soft }]}>
-      <T style={{ fontFamily: FONT.bold, fontSize: 24, fontVariant: ['tabular-nums'] }} color={onTone ? BRAND.ink : c.text}>
+      <T style={{ fontFamily: FONT.bold, fontSize: 24, lineHeight: 36, fontVariant: ['tabular-nums'] }} color={onTone ? BRAND.ink : c.text}>
         {value}
       </T>
       <T style={{ fontSize: 12 }} color={onTone ? BRAND.ink : c.muted}>

@@ -68,6 +68,15 @@ export interface ChatResponse {
   reply: string;
   mode: 'llm' | 'offline';
   tool_calls: ToolCall[];
+  document_context?: string | null;
+}
+
+export interface ChatFile {
+  uri: string;
+  name: string;
+  mimeType?: string;
+  size?: number;
+  file?: Blob;
 }
 
 export interface Health {
