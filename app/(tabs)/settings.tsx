@@ -1,4 +1,4 @@
-// Tab Cài đặt: tài khoản, kiểm tra AI, Gmail, thống kê, nhắc việc, dữ liệu demo.
+// Tab Cài đặt: tài khoản, Gmail, thống kê, nhắc việc, dữ liệu demo.
 
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppIconPicker } from '@/components/AppIconPicker';
 import { Button, Card, Display, Muted, T } from '@/components/ui';
-import { MotionAppear, MotionScreen } from '@/components/MotionEntrance';
+import { MotionScreen } from '@/components/MotionEntrance';
 import { BRAND, FONT, SCREEN_PAD, TAB_BAR_SPACE, usePalette } from '@/constants/theme';
 import { api, authApi } from '@/lib/api';
 import { fmtDue } from '@/lib/dates';
@@ -15,8 +15,7 @@ import { gmailGrantErrorMessage } from '@/lib/errors';
 import { googleAvailable, googleGrantGmail } from '@/lib/google';
 import { scheduledCount, sendTest, supported as notifSupported } from '@/lib/notifications';
 import { useStore } from '@/lib/store';
-import { useReducedMotion } from '@/lib/useReducedMotion';
-import type { AiCheck, GmailStatus, PublicConfig, Stats } from '@/lib/types';
+import type { GmailStatus, PublicConfig, Stats } from '@/lib/types';
 
 export default function SettingsScreen() {
   return <MotionScreen><SettingsContent /></MotionScreen>;
@@ -24,12 +23,10 @@ export default function SettingsScreen() {
 
 function SettingsContent() {
   const c = usePalette();
-  const reducedMotion = useReducedMotion();
   const insets = useSafeAreaInsets();
-  const { user, settings, updateSettings, health, error, refresh, scheduled, signOut, reloadUser, tasks } = useStore();
+  const { user, settings, updateSettings, refresh, scheduled, signOut, reloadUser, tasks } = useStore();
   const [busy, setBusy] = useState<string | null>(null);
   const [pending, setPending] = useState<number | null>(null);
-  const [ai, setAi] = useState<AiCheck | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [gmail, setGmail] = useState<GmailStatus | null>(null);
   const [cfg, setCfg] = useState<PublicConfig | null>(null);
@@ -111,42 +108,6 @@ function SettingsContent() {
 
       <View style={{ paddingHorizontal: SCREEN_PAD, gap: 14, marginTop: 16 }}>
         <AppIconPicker />
-        <Card tone={BRAND.mint}>
-          <Display size={22} color={BRAND.mintInk}>
-            AI
-          </Display>
-          {health ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 }}>
-              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: health.mode === 'llm' ? '#1A9E6A' : BRAND.amberInk }} />
-              <T style={{ fontFamily: FONT.semibold }} color={BRAND.mintInkDeep}>
-                {health.mode !== 'llm'
-                  ? 'Bộ luật (offline) — AI chưa bật'
-                  : health.filter_model && health.filter_model !== health.model
-                    ? `Trực tiếp · lọc: ${health.filter_model} · trả lời: ${health.model}`
-                    : `Trực tiếp · ${health.model}`}
-              </T>
-            </View>
-          ) : (
-            <T color={BRAND.mintInkDeep}>{error ?? 'Chưa kết nối máy chủ'}</T>
-          )}
-          <T v="small" color={BRAND.mintInk} style={{ marginTop: 4 }}>
-            Máy chủ: {settings.baseUrl.replace(/^https?:\/\//, '')}
-          </T>
-          <T v="small" color={BRAND.mintInk} style={{ marginTop: 4 }}>
-            Chuyển động: {reducedMotion ? 'đang tắt theo cài đặt Trợ năng của điện thoại' : 'đang bật'}
-          </T>
-          <View style={{ marginTop: 12, alignSelf: 'flex-start' }}>
-            <Button small variant="dark" label="Kiểm tra AI ngay" busy={busy === 'ai'} onPress={() => run('ai', async () => setAi(await api.aiCheck()))} />
-          </View>
-          {ai && (
-            <MotionAppear key={`${ai.model}-${ai.latency_ms}`}>
-              <T v="small" color={ai.ok ? BRAND.mintInkDeep : c.bad} style={{ marginTop: 8 }}>
-                {ai.ok ? `AI trả lời sau ${ai.latency_ms} ms (${ai.model})` : (ai.error ?? 'AI trả kết quả không đúng')}
-              </T>
-            </MotionAppear>
-          )}
-        </Card>
-
         {stats && (
           <View style={{ gap: 8 }}>
             <T v="label" color={c.muted}>

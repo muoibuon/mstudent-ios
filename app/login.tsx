@@ -200,7 +200,7 @@ export default function LoginScreen() {
             <Pressable onPress={() => setEditServer(true)} accessibilityRole="button" style={styles.serverLine}>
               <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: !server ? c.muted : live ? '#1A9E6A' : BRAND.amberInk }} />
               <T style={{ fontSize: 12 }} color={c.muted} numberOfLines={1}>
-                {host} · {checking || !server ? 'đang kết nối…' : live ? 'AI trực tiếp' : 'Bộ luật (offline)'} · Đổi máy chủ
+                {host} · {checking || !server ? 'đang kết nối…' : live ? 'Đã kết nối' : 'Không dùng AI'} · Đổi máy chủ
               </T>
             </Pressable>
           )}

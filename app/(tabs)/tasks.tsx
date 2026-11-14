@@ -7,6 +7,7 @@ import { Pressable, RefreshControl, SectionList, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/Icon';
+import { DigestText } from '@/components/DigestText';
 import { EventActions, InviteCard } from '@/components/InviteCard';
 import { Meme } from '@/components/Mascot';
 import { MotionScreen } from '@/components/MotionEntrance';
@@ -158,9 +159,7 @@ function TasksContent() {
                   </Pressable>
                 </View>
                 {showDigest && (
-                  <T style={{ fontSize: 14, lineHeight: 20 }} color={BRAND.mintInkDeep}>
-                    {digest}
-                  </T>
+                  <DigestText text={digest} />
                 )}
               </View>
             )}
@@ -173,15 +172,12 @@ function TasksContent() {
             </T>
           </View>
         )}
-        renderItem={({ item, index, section }) => {
-          // Thẻ ngay sau một sự kiện đã tham gia không xếp chồng (để lộ nút Đăng ký / Mở link của sự kiện đó).
-          const prev = index > 0 ? section.data[index - 1] : null;
+        renderItem={({ item, index }) => {
           return (
             <View>
               <TaskCard
                 task={item}
                 now={now}
-                overlap={index > 0 && prev?.rsvp !== 'going'}
                 entranceDelay={Math.min(index, 3) * 80}
                 onDone={() => {
                   if (todayCount === 1 && bucketOf(item.due_at, now) === 'Hôm nay') setCelebrating(true);

@@ -99,7 +99,7 @@ function CalendarContent() {
           {dayTasks.length ? (
             <>
               {dayTasks.map((t, i) => (
-                <TaskCard key={t.id} task={t} now={now} overlap={i > 0} entranceDelay={Math.min(i, 3) * 80} onDone={() => markDone(t.id)} onLongPress={() => setMoving(t)} />
+                <TaskCard key={t.id} task={t} now={now} entranceDelay={Math.min(i, 3) * 80} onDone={() => markDone(t.id)} onLongPress={() => setMoving(t)} />
               ))}
               <Muted style={{ marginTop: 12 }}>Nhấn giữ một việc để dời sang ngày khác.</Muted>
             </>
